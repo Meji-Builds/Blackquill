@@ -5,6 +5,10 @@ import { Cover } from "@/components/Cover";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import type { StoryRow } from "@/lib/studio/types";
 
+function plural(n: number, word: string) {
+  return `${n.toLocaleString()} ${word}${n === 1 ? "" : "s"}`;
+}
+
 export const metadata: Metadata = { title: "Writer Studio" };
 
 export default async function StudioPage() {
@@ -53,7 +57,7 @@ export default async function StudioPage() {
                     <StatusBadge status={s.status} />
                   </div>
                   <p className="mt-2 text-sm text-muted">
-                    {s.chapters[0]?.count ?? 0} chapters · {s.word_count.toLocaleString()} published words
+                    {plural(s.chapters[0]?.count ?? 0, "chapter")} · {plural(s.word_count, "published word")}
                   </p>
                   <p className="text-xs text-muted">Edited {new Date(s.updated_at).toLocaleDateString()}</p>
                 </div>

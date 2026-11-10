@@ -104,7 +104,7 @@ export default async function StoryPage({ params }: { params: Params }) {
               <span className="rounded-full border border-border px-2 py-0.5 text-xs capitalize">{story.rating}</span>
             )}
             <span>
-              {list.length} chapters · {story.word_count.toLocaleString()} words · about{" "}
+              {list.length} {list.length === 1 ? "chapter" : "chapters"} · {story.word_count.toLocaleString()} words · about{" "}
               {readingMinutes(story.word_count)} min
             </span>
             {story.last_chapter_at && <span>· Updated {new Date(story.last_chapter_at).toLocaleDateString()}</span>}

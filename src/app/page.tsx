@@ -115,7 +115,7 @@ export default async function Home() {
 
       <StoryRow
         title="Fresh Shelf"
-        note="New stories in their first week. Give one a chapter."
+        note="New stories in their first week. Be one of their first readers."
         empty="No new stories this week yet. Yours could be the first."
       >
         {fresh.map((s) => card(s))}

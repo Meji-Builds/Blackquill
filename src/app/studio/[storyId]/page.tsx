@@ -63,7 +63,8 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
         )}
       </div>
       <p className="mt-1 text-sm text-muted">
-        {list.length} chapters · {published} published · {s.word_count.toLocaleString()} published words
+        {list.length} {list.length === 1 ? "chapter" : "chapters"} · {published} published ·{" "}
+        {s.word_count.toLocaleString()} published {s.word_count === 1 ? "word" : "words"}
       </p>
 
       {s.status === "draft" && (

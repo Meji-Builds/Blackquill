@@ -1,4 +1,4 @@
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 font-serif text-xl tracking-wide ${className}`}>
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
@@ -9,7 +9,7 @@ export function Logo({ className = "" }: { className?: string }) {
         />
         <path d="M5 21l3-7" stroke="currentColor" strokeWidth="1.5" className="text-foreground" />
       </svg>
-      Blackquill
+      <span className={compact ? "hidden sm:inline" : undefined}>Blackquill</span>
     </span>
   );
 }
