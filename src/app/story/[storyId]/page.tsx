@@ -143,14 +143,14 @@ export default async function StoryPage({ params }: { params: Params }) {
           {(genres.length > 0 || tags.length > 0) && (
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
               {genres.map((g) => (
-                <span key={g.slug} className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1">
+                <Link key={g.slug} href={`/genre/${g.slug}`} className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 hover:bg-accent/20">
                   {g.name}
-                </span>
+                </Link>
               ))}
               {tags.map((t) => (
-                <span key={t.slug} className="rounded-full border border-border px-3 py-1 text-muted">
+                <Link key={t.slug} href={`/tag/${t.slug}`} className="rounded-full border border-border px-3 py-1 text-muted hover:text-foreground">
                   #{t.name}
-                </span>
+                </Link>
               ))}
             </div>
           )}

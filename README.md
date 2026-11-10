@@ -26,6 +26,18 @@ key for `.env.local`. Email confirmation is off locally, so sign-up logs straigh
 
 ## What is in place
 
+### Build step 4: search, browse and home
+
+- `/browse`: search titles, synopses, author names and tags (full-text plus typo-tolerant title matching), with
+  filters for genre, status, length, last updated and sort, an "Include mature" switch, removable filter chips,
+  pagination and popular tags. Empty form fields redirect to a clean URL.
+- `/genre/[slug]` and `/tag/[slug]`: the same view locked to one genre or tag; story pages link to them.
+- Home page rows: Continue Reading (signed in), Fresh Shelf (stories in their first week), Recently Updated, the
+  four biggest genres, and a Browse by genre list. Rising and Trending arrive with the discovery rankings in step 5.
+- Mature stories are hidden from browse and home unless "Include mature" is ticked.
+- Database functions `search_stories`, `popular_tags` and `genre_counts` (migration
+  `20261112000000_search_browse.sql`), all running under the caller's Row Level Security.
+
 ### Build step 3: reader
 
 - Story page (`/story/[id]`): cover, author, status, rating, word count and reading time, genres, tags,
@@ -81,7 +93,7 @@ key for `.env.local`. Email confirmation is off locally, so sign-up logs straigh
 1. ~~Project setup, auth, base schema with RLS~~
 2. ~~Writer studio basics: create a story, write and autosave chapters, publish, schedule~~
 3. ~~Reader basics: story page, chapter reader with themes, progress saving, shelves~~
-4. Search, genre and tag browse pages, home page rows
+4. ~~Search, genre and tag browse pages, home page rows~~
 5. Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings
 6. PWA and offline chapter downloads
 7. Choice-point builder and inline reader experience, with pick percentages
