@@ -15,9 +15,33 @@ Vercel.
 3. In Supabase Auth, enable Email and Google providers, and add `http://localhost:3000/auth/callback` (plus your
    production URL) to the redirect allow list.
 4. `cp .env.example .env.local` and fill in the project URL and anon key.
-5. `npm install && npm run dev`, then open http://localhost:3000.
+5. Enable the `pg_cron` extension (Database > Extensions) before applying the migrations, so scheduled chapters
+   publish on time.
+6. `npm install && npm run dev`, then open http://localhost:3000. `npm test` runs the unit tests.
 
-## What is in place (build step 1)
+## Local development with a local Supabase
+
+With Docker running: `npx supabase start` applies the migrations to a local stack and prints the API URL and anon
+key for `.env.local`. Email confirmation is off locally, so sign-up logs straight in.
+
+## What is in place
+
+### Build step 2: writer studio
+
+- `/studio`: your stories with status, chapter count and published word count.
+- `/studio/new` and the story page's "Story details": title, cover upload (JPG/PNG/WebP, 2 MB), synopsis,
+  up to 3 genres, up to 15 tags (normalised, created on first use), content rating and status.
+- Stories stay private drafts until "Publish story"; publishing starts the story's Fresh Shelf week.
+- Chapter list with new chapter, move up/down, and delete (later chapters renumber).
+- Chapter editor: distraction-free serif writing surface with a focus mode, live word count, autosave 1.5 s after
+  typing (plus Ctrl/Cmd+S and on tab hide), a local backup offered back after a crash, retry when offline, and
+  conflict detection so a stale tab never overwrites newer text.
+- Publish now, schedule for a date and time, cancel a schedule, or unpublish. `pg_cron` publishes due chapters
+  every minute, stamped with their scheduled time.
+- Database functions `set_story_genres`, `set_story_tags`, `create_chapter`, `reorder_chapters`, `delete_chapter`
+  and `publish_due_chapters` (migration `20261111000000_writer_studio.sql`); each checks story ownership.
+
+### Build step 1: setup
 
 - Next.js 15 + Tailwind v4 app with the dark Blackquill theme, site header, home page shell.
 - Supabase browser/server clients and a middleware that refreshes sessions and guards `/studio` and `/library`.
@@ -35,7 +59,7 @@ Vercel.
 ## Build order
 
 1. ~~Project setup, auth, base schema with RLS~~
-2. Writer studio basics: create a story, write and autosave chapters, publish, schedule
+2. ~~Writer studio basics: create a story, write and autosave chapters, publish, schedule~~
 3. Reader basics: story page, chapter reader with themes, progress saving, shelves
 4. Search, genre and tag browse pages, home page rows
 5. Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings
