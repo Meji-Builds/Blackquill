@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Blackquill: dark and mysterious. A quill with an obsidian edge. */
+:root {
+  --background: #0b0a0d;
+  --surface: #141218;
+  --surface-2: #1c1921;
+  --border: #2a2630;
+  --foreground: #e9e5ee;
+  --muted: #9a93a5;
+  --accent: #b69cff;
+  --accent-strong: #8f6bff;
+  --danger: #ff6b7d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-danger: var(--danger);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
