@@ -3,7 +3,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
-  title: { default: "Blackquill", template: "%s · Blackquill" },
+  title: { default: "Obsidian Quill", template: "%s · Obsidian Quill" },
   description: "Serialized web novels and light novels, discovered by how deeply people read them.",
 };
 

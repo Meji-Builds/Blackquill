@@ -83,8 +83,8 @@ export const DEFAULT_SETTINGS: ReaderSettings = {
   width: "medium",
 };
 
-export const COOKIE = "bq_reader";
-const STORAGE_KEY = "bq:reader-settings";
+export const COOKIE = "oq_reader";
+const STORAGE_KEY = "oq:reader-settings";
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** Validates anything (cookie, localStorage, old formats) into complete settings. */

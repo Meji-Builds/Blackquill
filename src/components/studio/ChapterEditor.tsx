@@ -12,7 +12,7 @@ const AUTOSAVE_MS = 1500;
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 function backupKey(id: string) {
-  return `bq:chapter-backup:${id}`;
+  return `oq:chapter-backup:${id}`;
 }
 
 function readBackup(id: string): { title: string; body: string; at: number } | null {

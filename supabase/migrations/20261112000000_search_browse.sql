@@ -1,4 +1,4 @@
--- Blackquill build step 4: search and browse.
+-- Obsidian Quill build step 4: search and browse.
 -- One function serves search, the browse page, genre and tag pages, and the home page rows.
 -- It runs as the caller, so Row Level Security still applies; drafts and stories with no published
 -- chapters are excluded explicitly, and mature stories are hidden unless asked for.

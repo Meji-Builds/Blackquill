@@ -1,6 +1,6 @@
 export function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-serif text-xl tracking-wide ${className}`}>
+    <span className={`inline-flex items-center gap-2 font-serif text-lg tracking-wide sm:text-xl ${className}`}>
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
         <path
           d="M20 3c-6 1-11 6-13 12l-2 6 2-1c1-3 3-5 5-6l-2-1c3-1 6-4 7-7l-2 1c2-1 4-3 5-4z"
@@ -9,7 +9,7 @@ export function Logo({ className = "", compact = false }: { className?: string; 
         />
         <path d="M5 21l3-7" stroke="currentColor" strokeWidth="1.5" className="text-foreground" />
       </svg>
-      <span className={compact ? "hidden sm:inline" : undefined}>Blackquill</span>
+      <span className={compact ? "hidden sm:inline" : "hidden min-[380px]:inline"}>Obsidian Quill</span>
     </span>
   );
 }

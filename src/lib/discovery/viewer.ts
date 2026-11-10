@@ -1,5 +1,5 @@
 /** Cookie holding a random id for signed-out readers, so discovery can count them once each. */
-export const ANON_COOKIE = "bq_aid";
+export const ANON_COOKIE = "oq_aid";
 export const ANON_ID = /^[0-9a-f-]{36}$/;
 
 /**

@@ -1,4 +1,4 @@
-# Blackquill
+# Obsidian Quill
 
 A global web novel and light novel platform: writers publish serialized fiction for free, and readers discover
 stories through a fair, depth-based discovery system (the Fresh Shelf). Later stages add interactive choice-point
@@ -34,7 +34,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 - Reading events: the reader logs opening a chapter and finishing it (the end of the text on screen after a
   believable time, re-checked by the server); a later visit logs a return; shelf adds and follows are logged by
-  database triggers. Authors' own reads never count. Signed-out readers get a random `bq_aid` cookie and count
+  database triggers. Authors' own reads never count. Signed-out readers get a random `oq_aid` cookie and count
   for half. Clients cannot insert events directly; `log_reading_event()` validates and deduplicates them.
 - Depth points per reader: each chapter finished (up to 10) 1, a return 2, a shelf add 3, a follow 2; opening
   alone 0, so readers who bounce lower a story's score. Depth is a smoothed average of points per reader.
@@ -97,7 +97,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ### Build step 1: setup
 
-- Next.js 15 + Tailwind v4 app with the dark Blackquill theme, site header, home page shell.
+- Next.js 15 + Tailwind v4 app with the dark Obsidian Quill theme, site header, home page shell.
 - Supabase browser/server clients and a middleware that refreshes sessions and guards `/studio` and `/library`.
 - Email/password and Google sign-in (`/login`), OAuth/email callback (`/auth/callback`), sign-out.
 - Base schema for every table in the project scope, with Row Level Security:

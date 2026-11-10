@@ -31,7 +31,7 @@ export const isSupabaseConfigured = () =>
 
 // The auth cookie name is otherwise derived from the Supabase host, which differs between the browser and the
 // server when proxying. A fixed name keeps both sides on the same session.
-export const cookieOptions = { name: "sb-blackquill-auth-token" };
+export const cookieOptions = { name: "sb-obsidian-quill-auth-token" };
 
 /** Public URL of a file in a public storage bucket, as browsers should load it. */
 export function publicStorageUrl(bucket: string, path: string) {

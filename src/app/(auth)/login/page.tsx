@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Sign in" };
 export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="font-serif text-3xl">Welcome to Blackquill</h1>
+      <h1 className="font-serif text-3xl">Welcome to Obsidian Quill</h1>
       <p className="mt-2 text-sm text-muted">Sign in to save your library, follow stories, and write.</p>
       {isSupabaseConfigured() ? (
         <Suspense>

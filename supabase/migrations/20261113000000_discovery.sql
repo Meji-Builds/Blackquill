@@ -1,4 +1,4 @@
--- Blackquill build step 5: discovery.
+-- Obsidian Quill build step 5: discovery.
 --
 -- Reading events feed a per-story score that rewards depth (chapters finished, coming back, shelving,
 -- following) over raw opens. New stories get a Fresh Shelf batch of readers in their first week; those

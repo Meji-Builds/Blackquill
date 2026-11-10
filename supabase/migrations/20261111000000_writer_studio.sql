@@ -1,4 +1,4 @@
--- Blackquill build step 2: writer studio helpers.
+-- Obsidian Quill build step 2: writer studio helpers.
 -- Every function checks that the caller owns the story before changing anything.
 
 -- ---------------------------------------------------------------------------

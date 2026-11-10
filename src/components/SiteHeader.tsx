@@ -20,13 +20,13 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:gap-6">
-        <Link href="/" aria-label="Blackquill home" className="shrink-0">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6">
+        <Link href="/" aria-label="Obsidian Quill home" className="shrink-0">
           <Logo compact={signedIn} />
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-4 text-sm whitespace-nowrap text-muted sm:gap-5">
           <Link href="/browse" className="hover:text-foreground">Browse</Link>
-          <Link href="/rankings" className={signedIn ? "hidden hover:text-foreground sm:inline" : "hover:text-foreground"}>
+          <Link href="/rankings" className="hidden hover:text-foreground sm:inline">
             Rankings
           </Link>
           {signedIn && <Link href="/library" className="hover:text-foreground">Library</Link>}

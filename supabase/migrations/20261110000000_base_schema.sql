@@ -1,4 +1,4 @@
--- Blackquill base schema (build step 1)
+-- Obsidian Quill base schema (build step 1)
 -- Tables follow section 6 of the project scope. Every table has Row Level Security:
 -- authors edit only their own stories and chapters; readers edit only their own
 -- shelves, progress, follows, picks and comments.
