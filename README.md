@@ -26,6 +26,19 @@ key for `.env.local`. Email confirmation is off locally, so sign-up logs straigh
 
 ## What is in place
 
+### Build step 3: reader
+
+- Story page (`/story/[id]`): cover, author, status, rating, word count and reading time, genres, tags,
+  synopsis, published chapters, and Start reading / Continue: Chapter N.
+- Chapter reader (`/story/[id]/chapter/[n]`): dark, light and sepia themes, serif or sans, six text sizes,
+  three line spacings, three widths (remembered on the device), a reading progress bar, previous/next links and
+  arrow-key navigation. Drafts and scheduled chapters return 404.
+- Reading progress: the current chapter and scroll position are saved every few seconds and when the tab is
+  hidden, and restored on any device signed into the same account.
+- Library (`/library`): Reading, Plan to Read and Completed (a story sits on at most one of these), plus custom
+  shelves you can create, rename and delete. Add to library from any story page; remove from a shelf in the
+  library. Cards link straight to the chapter you are on.
+
 ### Build step 2: writer studio
 
 - `/studio`: your stories with status, chapter count and published word count.
@@ -60,7 +73,7 @@ key for `.env.local`. Email confirmation is off locally, so sign-up logs straigh
 
 1. ~~Project setup, auth, base schema with RLS~~
 2. ~~Writer studio basics: create a story, write and autosave chapters, publish, schedule~~
-3. Reader basics: story page, chapter reader with themes, progress saving, shelves
+3. ~~Reader basics: story page, chapter reader with themes, progress saving, shelves~~
 4. Search, genre and tag browse pages, home page rows
 5. Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings
 6. PWA and offline chapter downloads

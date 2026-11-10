@@ -56,6 +56,11 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <h1 className="font-serif text-3xl">{s.title}</h1>
         <StatusBadge status={s.status} />
+        {s.status !== "draft" && (
+          <Link href={`/story/${s.id}`} className="ml-auto text-sm text-accent hover:underline">
+            View as reader →
+          </Link>
+        )}
       </div>
       <p className="mt-1 text-sm text-muted">
         {list.length} chapters · {published} published · {s.word_count.toLocaleString()} published words
