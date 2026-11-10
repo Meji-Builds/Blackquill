@@ -26,6 +26,9 @@ export async function SiteHeader() {
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-4 text-sm whitespace-nowrap text-muted sm:gap-5">
           <Link href="/browse" className="hover:text-foreground">Browse</Link>
+          <Link href="/rankings" className={signedIn ? "hidden hover:text-foreground sm:inline" : "hover:text-foreground"}>
+            Rankings
+          </Link>
           {signedIn && <Link href="/library" className="hover:text-foreground">Library</Link>}
           {signedIn && <Link href="/studio" className="hover:text-foreground">Write</Link>}
         </div>

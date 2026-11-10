@@ -22,7 +22,7 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
   const { storyId } = await params;
   const { supabase, user } = await requireUser(`/studio/${storyId}`);
 
-  const [{ data: story }, { data: genres }, { data: chapters }, { data: storyGenres }, { data: storyTags }] =
+  const [{ data: story }, { data: genres }, { data: chapters }, { data: storyGenres }, { data: storyTags }, { data: slot }] =
     await Promise.all([
       supabase.from("stories").select("*").eq("id", storyId).eq("author_id", user.id).maybeSingle(),
       supabase.from("genres").select("id, slug, name").order("name"),
@@ -33,6 +33,11 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
         .order("number"),
       supabase.from("story_genres").select("genres(slug)").eq("story_id", storyId),
       supabase.from("story_tags").select("tags(name)").eq("story_id", storyId),
+      supabase
+        .from("fresh_shelf_slots")
+        .select("impressions_target, impressions_served, ends_at, outcome, extended")
+        .eq("story_id", storyId)
+        .maybeSingle(),
     ]);
   if (!story) notFound();
   const s = story as StoryRow;
@@ -69,6 +74,20 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
 
       {s.status === "draft" && (
         <StoryActions storyId={s.id} mode="publish" publishedChapters={published} />
+      )}
+
+      {slot && (
+        <p className="mt-6 rounded-lg border border-border bg-surface/60 px-4 py-3 text-sm">
+          <span className="font-medium text-accent">Fresh Shelf: </span>
+          {slot.outcome === "active" &&
+            `shown to ${slot.impressions_served} of ${slot.impressions_target} new readers so far, until ${new Date(
+              slot.ends_at,
+            ).toLocaleDateString()}${slot.extended ? " (extended a week to reach more readers)" : ""}.`}
+          {slot.outcome === "graduated" &&
+            "graduated. Readers stayed with it, so it can now appear in Rising and Trending."}
+          {slot.outcome === "ended" &&
+            "week finished. The story stays in search and genre pages, and can still rise if readers find it there."}
+        </p>
       )}
 
       <section className="mt-10">

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveProgress } from "@/app/reader/actions";
+import { logReadingEvent } from "@/app/discovery/actions";
+import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import {
@@ -53,6 +55,7 @@ export function ChapterReader(props: {
   // Last measured position; saving reads this instead of measuring, so a save during navigation
   // records where the reader actually was, not the next page's layout.
   const ratio = useRef(props.initialScroll);
+  const articleRef = useRef<HTMLElement>(null);
   const restored = useRef(false);
 
   // Readers who saved settings before they were kept in a cookie: pick them up once.
@@ -113,6 +116,32 @@ export function ChapterReader(props: {
       persist();
     };
   }, [persist]);
+
+  // Discovery: record the open, then a finish once the reader reaches the end after a believable time.
+  // The server re-checks both; "too fast" just means try again a little later.
+  useEffect(() => {
+    const openedAt = Date.now();
+    const needMs = minFinishSeconds(props.wordCount) * 1000;
+    let finished = false;
+    let inFlight = false;
+    void logReadingEvent(storyId, chapterId, "open");
+    const tryFinish = () => {
+      // "Reached the end" means the last lines of the chapter text are on screen.
+      const end = articleRef.current?.getBoundingClientRect().bottom ?? Infinity;
+      if (finished || inFlight || end > window.innerHeight + 40 || Date.now() - openedAt < needMs) return;
+      inFlight = true;
+      void logReadingEvent(storyId, chapterId, "finish").then((r) => {
+        inFlight = false;
+        if (r === "finish" || r === "duplicate" || r === "author" || r === "chapter not public") finished = true;
+      });
+    };
+    const timer = setInterval(tryFinish, 5000);
+    window.addEventListener("scroll", tryFinish, { passive: true });
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("scroll", tryFinish);
+    };
+  }, [storyId, chapterId, props.wordCount]);
 
   // Arrow keys move between chapters when no field has focus.
   useEffect(() => {
@@ -196,6 +225,7 @@ export function ChapterReader(props: {
         {panel && <ReaderSettingsPanel settings={settings} onChange={update} onClose={() => setPanel(false)} />}
 
         <article
+          ref={articleRef}
           className="mt-10 space-y-[1em]"
           style={{ fontFamily: FONTS[settings.font].stack, fontSize: settings.size, lineHeight: settings.lineHeight }}
         >

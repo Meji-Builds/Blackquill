@@ -6,9 +6,12 @@ export function Cover({ url, title, className = "" }: { url: string | null; titl
   return (
     <div
       aria-hidden="true"
-      className={`flex aspect-[2/3] items-end rounded-md border border-border bg-gradient-to-br from-surface-2 to-background p-3 font-serif text-sm text-muted ${className}`}
+      className={`@container flex aspect-[2/3] items-end rounded-md border border-border bg-gradient-to-br from-surface-2 to-background p-1.5 font-serif @[6rem]:p-3 text-muted ${className}`}
     >
-      <span className="line-clamp-3">{title}</span>
+      {/* Small covers (rankings, lists) get smaller type so titles wrap instead of being cut off. */}
+      <span className="line-clamp-4 w-full text-[10px] leading-tight [overflow-wrap:anywhere] @[6rem]:text-xs @[8rem]:line-clamp-3 @[8rem]:text-sm">
+        {title}
+      </span>
     </div>
   );
 }

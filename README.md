@@ -30,6 +30,24 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
 
+### Build step 5: discovery
+
+- Reading events: the reader logs opening a chapter and finishing it (the end of the text on screen after a
+  believable time, re-checked by the server); a later visit logs a return; shelf adds and follows are logged by
+  database triggers. Authors' own reads never count. Signed-out readers get a random `bq_aid` cookie and count
+  for half. Clients cannot insert events directly; `log_reading_event()` validates and deduplicates them.
+- Depth points per reader: each chapter finished (up to 10) 1, a return 2, a shelf add 3, a follow 2; opening
+  alone 0, so readers who bounce lower a story's score. Depth is a smoothed average of points per reader.
+- Fresh Shelf: every new story is shown to its first 75 distinct readers within 7 days. A view counts only when
+  the row is on screen, and viewers see stories they have not been shown first. When the batch or the week ends
+  the story graduates (depth at least 1.5) or stops being pushed; too few readers to judge gets one more week.
+  Stories that stop being pushed stay in search and genre pages and can still rise if readers find them.
+- Trending (past week, recent days weigh more) and Rising (under 90 days old, depth per reader) on the home page
+  and `/rankings`, which also has Most finished and a genre filter. Writers see their Fresh Shelf status in the
+  studio.
+- `refresh_discovery()` recomputes scores every 15 minutes with `pg_cron`. Every threshold above lives in the
+  one-row `discovery_settings` table, editable by admins.
+
 ### Build step 4: search, browse and home
 
 - `/browse`: search titles, synopses, author names and tags (full-text plus typo-tolerant title matching), with
@@ -37,7 +55,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
   pagination and popular tags. Empty form fields redirect to a clean URL.
 - `/genre/[slug]` and `/tag/[slug]`: the same view locked to one genre or tag; story pages link to them.
 - Home page rows: Continue Reading (signed in), Fresh Shelf (stories in their first week), Recently Updated, the
-  four biggest genres, and a Browse by genre list. Rising and Trending arrive with the discovery rankings in step 5.
+  four biggest genres, and a Browse by genre list.
 - Mature stories are hidden from browse and home unless "Include mature" is ticked.
 - Database functions `search_stories`, `popular_tags` and `genre_counts` (migration
   `20261112000000_search_browse.sql`), all running under the caller's Row Level Security.
@@ -98,7 +116,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 2. ~~Writer studio basics: create a story, write and autosave chapters, publish, schedule~~
 3. ~~Reader basics: story page, chapter reader with themes, progress saving, shelves~~
 4. ~~Search, genre and tag browse pages, home page rows~~
-5. Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings
+5. ~~Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings~~
 6. PWA and offline chapter downloads
 7. Choice-point builder and inline reader experience, with pick percentages
 8. Comic panel pipeline

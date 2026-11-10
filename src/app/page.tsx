@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { StoryCard, StoryRow } from "@/components/browse/StoryCard";
 import type { StoryHit } from "@/lib/browse/params";
+import { ImpressionTracker } from "@/components/browse/ImpressionTracker";
+import { ANON_COOKIE } from "@/lib/discovery/viewer";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +59,7 @@ export default async function Home() {
   const storyCols =
     "id, title, cover_url, status, rating, word_count, last_chapter_at, profiles!stories_author_id_fkey(username, display_name)";
 
-  const [continueRes, freshRes, updatedRes, genreRes] = await Promise.all([
+  const [continueRes, freshRes, updatedRes, genreRes, trendingRes, risingRes] = await Promise.all([
     user
       ? supabase
           .from("reading_progress")
@@ -65,17 +68,14 @@ export default async function Home() {
           .order("updated_at", { ascending: false })
           .limit(ROW)
       : Promise.resolve({ data: [] }),
-    supabase
-      .from("fresh_shelf_slots")
-      .select(`starts_at, stories!inner(${storyCols})`)
-      .eq("graduated", false)
-      .gt("ends_at", new Date().toISOString())
-      .neq("stories.rating", "mature")
-      .not("stories.last_chapter_at", "is", null)
-      .order("starts_at", { ascending: false })
-      .limit(ROW),
+    supabase.rpc("fresh_shelf_stories", {
+      p_anon: user ? null : ((await cookies()).get(ANON_COOKIE)?.value ?? null),
+      p_limit: ROW,
+    }),
     supabase.rpc("search_stories", { p_sort: "updated", p_limit: ROW }),
     supabase.rpc("genre_counts"),
+    supabase.rpc("ranked_stories", { p_list: "trending", p_limit: ROW }),
+    supabase.rpc("ranked_stories", { p_list: "rising", p_limit: ROW }),
   ]);
 
   const genres = ((genreRes.data ?? []) as { slug: string; name: string; stories: number }[]).filter((g) => g.stories > 0);
@@ -88,7 +88,9 @@ export default async function Home() {
     chapters: { number: number } | null;
     stories: Joined;
   }[]).filter((r) => r.stories.status !== "draft");
-  const fresh = ((freshRes.data ?? []) as unknown as { stories: Joined }[]).map((r) => r.stories);
+  const fresh = (freshRes.data ?? []) as StoryHit[];
+  const trending = (trendingRes.data ?? []) as StoryHit[];
+  const rising = (risingRes.data ?? []) as StoryHit[];
   const updated = (updatedRes.data ?? []) as StoryHit[];
 
   const card = (s: Joined, extra?: { subtitle?: string; href?: string }) => (
@@ -113,12 +115,28 @@ export default async function Home() {
         </StoryRow>
       )}
 
-      <StoryRow
-        title="Fresh Shelf"
-        note="New stories in their first week. Be one of their first readers."
-        empty="No new stories this week yet. Yours could be the first."
-      >
-        {fresh.map((s) => card(s))}
+      <ImpressionTracker storyIds={fresh.map((s) => s.id)}>
+        <StoryRow
+          title="Fresh Shelf"
+          note="New stories in their first week. Be one of their first readers."
+          empty="No new stories this week yet. Yours could be the first."
+        >
+          {fresh.map((s) => (
+            <StoryCard key={s.id} story={s} />
+          ))}
+        </StoryRow>
+      </ImpressionTracker>
+
+      <StoryRow title="Trending" href="/rankings" note="Read deepest this week: chapters finished, return visits, shelf adds.">
+        {trending.map((s) => (
+          <StoryCard key={s.id} story={s} />
+        ))}
+      </StoryRow>
+
+      <StoryRow title="Rising" href="/rankings?list=rising" note="Newer stories whose readers keep going.">
+        {rising.map((s) => (
+          <StoryCard key={s.id} story={s} />
+        ))}
       </StoryRow>
 
       <StoryRow title="Recently Updated" href="/browse?sort=updated">
