@@ -24,6 +24,10 @@ Vercel.
 With Docker running: `npx supabase start` applies the migrations to a local stack and prints the API URL and anon
 key for `.env.local`. Email confirmation is off locally, so sign-up logs straight in.
 
+To open the local app from a phone or a preview link, set `NEXT_PUBLIC_SUPABASE_URL=/sb` and
+`SUPABASE_INTERNAL_URL=http://127.0.0.1:54321`, rebuild, and run `npx next start -H 0.0.0.0`. The app then proxies
+Supabase at `/sb`, so only the app's port needs to be reachable.
+
 ## What is in place
 
 ### Build step 4: search, browse and home

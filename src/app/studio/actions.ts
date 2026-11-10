@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import type { ActionResult, ContentRating, StoryStatus } from "@/lib/studio/types";
 import { MAX_COVER_BYTES, MAX_GENRES, MAX_TAGS, RATINGS, STORY_STATUSES } from "@/lib/studio/types";
 import { parseTags, slugify } from "@/lib/studio/text";
+import { publicStorageUrl } from "@/lib/supabase/env";
 
 type Supabase = Awaited<ReturnType<typeof requireUser>>["supabase"];
 
@@ -64,7 +65,7 @@ async function uploadCover(supabase: Supabase, userId: string, storyId: string, 
   const path = `${userId}/${storyId}-${Date.now()}.${ext}`;
   const { error } = await supabase.storage.from("covers").upload(path, file, { contentType: file.type });
   if (error) throw new Error(`Cover upload failed: ${error.message}`);
-  return supabase.storage.from("covers").getPublicUrl(path).data.publicUrl;
+  return publicStorageUrl("covers", path);
 }
 
 async function saveClassification(supabase: Supabase, storyId: string, input: StoryInput) {
