@@ -48,7 +48,12 @@ export default async function LibraryPage({ searchParams }: { searchParams: Sear
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-serif text-3xl">Your Library</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h1 className="font-serif text-3xl">Your Library</h1>
+        <Link href="/offline" className="text-sm text-accent hover:underline">
+          Downloaded for offline →
+        </Link>
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-border pb-4">
         {shelves.map((s) => (

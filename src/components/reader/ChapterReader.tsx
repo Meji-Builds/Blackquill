@@ -58,16 +58,16 @@ export function ChapterReader(props: {
   const articleRef = useRef<HTMLElement>(null);
   const restored = useRef(false);
 
-  // Readers who saved settings before they were kept in a cookie: pick them up once.
+  // The device's saved settings win over the ones the page was rendered with. They differ for readers who saved
+  // settings before they were kept in a cookie, and for pages saved offline before the reader changed settings.
   useEffect(() => {
-    if (props.hasSettingsCookie) return;
     const stored = readStoredSettings();
-    if (stored) {
-      const s = parseSettings(stored);
-      setSettings(s);
-      storeSettings(s);
-    }
-  }, [props.hasSettingsCookie]);
+    if (!stored) return;
+    const s = parseSettings(stored);
+    if (JSON.stringify(s) === JSON.stringify(props.initialSettings)) return;
+    setSettings(s);
+    if (!props.hasSettingsCookie) storeSettings(s);
+  }, [props.hasSettingsCookie, props.initialSettings]);
 
   function update(next: ReaderSettings) {
     setSettings(next);
@@ -79,7 +79,9 @@ export function ChapterReader(props: {
     const r = Math.round(ratio.current * 1000) / 1000;
     if (lastSaved.current !== null && Math.abs(r - lastSaved.current) < 0.01) return;
     lastSaved.current = r;
-    void saveProgress(storyId, chapterId, r);
+    saveProgress(storyId, chapterId, r).catch(() => {
+      lastSaved.current = null; // offline: try again on the next save
+    });
   }, [signedIn, storyId, chapterId]);
 
   // Restore the saved position once layout (and the reader's font settings) have settled.
@@ -124,16 +126,20 @@ export function ChapterReader(props: {
     const needMs = minFinishSeconds(props.wordCount) * 1000;
     let finished = false;
     let inFlight = false;
-    void logReadingEvent(storyId, chapterId, "open");
+    logReadingEvent(storyId, chapterId, "open").catch(() => {});
     const tryFinish = () => {
       // "Reached the end" means the last lines of the chapter text are on screen.
       const end = articleRef.current?.getBoundingClientRect().bottom ?? Infinity;
       if (finished || inFlight || end > window.innerHeight + 40 || Date.now() - openedAt < needMs) return;
       inFlight = true;
-      void logReadingEvent(storyId, chapterId, "finish").then((r) => {
-        inFlight = false;
-        if (r === "finish" || r === "duplicate" || r === "author" || r === "chapter not public") finished = true;
-      });
+      logReadingEvent(storyId, chapterId, "finish")
+        .then((r) => {
+          if (r === "finish" || r === "duplicate" || r === "author" || r === "chapter not public") finished = true;
+        })
+        .catch(() => {})
+        .finally(() => {
+          inFlight = false;
+        });
     };
     const timer = setInterval(tryFinish, 5000);
     window.addEventListener("scroll", tryFinish, { passive: true });

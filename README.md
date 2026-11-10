@@ -30,6 +30,23 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
 
+### Build step 6: installable app and offline reading
+
+- Installable on phones and desktops (web app manifest, Obsidian Quill icons including a maskable one, Apple
+  touch icon). Chrome reports no installability errors.
+- Service worker (`public/sw.js`, registered in production on HTTPS or localhost):
+  - Downloaded stories (story page, every published chapter, cover) are kept until the reader removes them.
+  - Recently visited reading pages (home, browse, stories, library, rankings) reopen offline; the newest 60 are
+    kept. Hashed app files and fonts are cached as they load.
+  - The writer studio and sign-in pages are never cached. Signing out deletes downloads and saved pages.
+  - Online, pages always come from the network first, and downloaded copies refresh when visited.
+- "Download for offline" on story pages, with progress, "Update offline copy (N new)" when chapters are added, and
+  Remove. `/offline` lists downloaded stories and stands in for pages that are not saved; the library links to it.
+- Offline, chapters open even if never visited, next/previous links work, and reading settings changed offline
+  apply to saved chapters. Progress and reading events are sent again once back online.
+- Offline features need HTTPS (or localhost); a phone opening the app over a plain `http://` LAN address gets the
+  site without them.
+
 ### Build step 5: discovery
 
 - Reading events: the reader logs opening a chapter and finishing it (the end of the text on screen after a
@@ -117,7 +134,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 3. ~~Reader basics: story page, chapter reader with themes, progress saving, shelves~~
 4. ~~Search, genre and tag browse pages, home page rows~~
 5. ~~Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings~~
-6. PWA and offline chapter downloads
+6. ~~PWA and offline chapter downloads~~
 7. Choice-point builder and inline reader experience, with pick percentages
 8. Comic panel pipeline
 9. Writer analytics dashboard, comments, notifications

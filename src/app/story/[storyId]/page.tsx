@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Cover } from "@/components/Cover";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import { ShelfButton, type ShelfOption } from "@/components/reader/ShelfButton";
+import { OfflineButton } from "@/components/reader/OfflineButton";
 import { readingMinutes } from "@/lib/reader/text";
 
 type Params = Promise<{ storyId: string }>;
@@ -138,6 +139,12 @@ export default async function StoryPage({ params }: { params: Params }) {
                 Sign in to add to library
               </Link>
             )}
+            <OfflineButton
+              storyId={story.id}
+              title={story.title}
+              coverUrl={story.cover_url}
+              chapters={list.map((c) => c.number)}
+            />
           </div>
 
           {(genres.length > 0 || tags.length > 0) && (
