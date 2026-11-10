@@ -20,27 +20,26 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
-        <Link href="/" aria-label="Blackquill home">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:gap-6">
+        <Link href="/" aria-label="Blackquill home" className="shrink-0">
           <Logo />
         </Link>
-        <div className="flex flex-1 items-center gap-5 text-sm text-muted">
+        <div className="flex min-w-0 flex-1 items-center gap-4 text-sm whitespace-nowrap text-muted sm:gap-5">
           <Link href="/browse" className="hover:text-foreground">Browse</Link>
-          <Link href="/rankings" className="hover:text-foreground">Rankings</Link>
           {signedIn && <Link href="/library" className="hover:text-foreground">Library</Link>}
           {signedIn && <Link href="/studio" className="hover:text-foreground">Write</Link>}
         </div>
         {signedIn ? (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted">@{username}</span>
+            <span className="hidden text-muted md:inline">@{username}</span>
             <form action="/auth/signout" method="post">
-              <button className="rounded-md border border-border px-3 py-1.5 hover:bg-surface-2">Sign out</button>
+              <button className="rounded-md border border-border px-3 py-1.5 whitespace-nowrap hover:bg-surface-2">Sign out</button>
             </form>
           </div>
         ) : (
           <Link
             href="/login"
-            className="rounded-md bg-accent-strong px-3 py-1.5 text-sm font-medium text-white hover:bg-accent"
+            className="shrink-0 rounded-md bg-accent-strong px-3 py-1.5 text-sm font-medium whitespace-nowrap text-white hover:bg-accent"
           >
             Sign in
           </Link>

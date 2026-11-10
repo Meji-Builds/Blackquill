@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChapterReader } from "@/components/reader/ChapterReader";
 import { toParagraphs } from "@/lib/reader/text";
+import { COOKIE, parseSettings } from "@/components/reader/settings";
 
 type Params = Promise<{ storyId: string; number: string }>;
 
@@ -74,6 +76,14 @@ export default async function ChapterPage({ params }: { params: Params }) {
   ]);
 
   const progress = progressRes.data;
+  // Settings come from a cookie so the first paint already uses the reader's colours and font.
+  const settingsCookie = (await cookies()).get(COOKIE)?.value;
+  let settingsRaw: string | null = null;
+  try {
+    settingsRaw = settingsCookie ? decodeURIComponent(settingsCookie) : null;
+  } catch {
+    settingsRaw = null;
+  }
   return (
     <ChapterReader
       key={chapter.id}
@@ -87,6 +97,8 @@ export default async function ChapterPage({ params }: { params: Params }) {
       prevNumber={prev?.number ?? null}
       nextNumber={next?.number ?? null}
       signedIn={Boolean(user)}
+      initialSettings={parseSettings(settingsRaw)}
+      hasSettingsCookie={Boolean(settingsRaw)}
       initialScroll={progress && progress.chapter_id === chapter.id ? progress.scroll_position : 0}
     />
   );

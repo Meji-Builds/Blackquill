@@ -30,9 +30,16 @@ key for `.env.local`. Email confirmation is off locally, so sign-up logs straigh
 
 - Story page (`/story/[id]`): cover, author, status, rating, word count and reading time, genres, tags,
   synopsis, published chapters, and Start reading / Continue: Chapter N.
-- Chapter reader (`/story/[id]/chapter/[n]`): dark, light and sepia themes, serif or sans, six text sizes,
-  three line spacings, three widths (remembered on the device), a reading progress bar, previous/next links and
-  arrow-key navigation. Drafts and scheduled chapters return 404.
+- Chapter reader (`/story/[id]/chapter/[n]`) with a reading settings sheet:
+  - Brightness (40 to 100 percent) that dims the whole screen.
+  - Background: nine presets (Midnight, Charcoal, Slate, Night blue, White, Cream, Sepia, Parchment, Sage) or any
+    custom colour; text colour is picked automatically for contrast (at least 7:1 on presets, 4.5:1 on any colour).
+  - Background type: plain, paper grain or linen.
+  - Fonts: Classic, Literata, Merriweather, Lora, EB Garamond, System sans, Inter, Atkinson Hyperlegible and
+    OpenDyslexic (self-hosted via Fontsource).
+  - Text size, line spacing and page width; reset to defaults.
+  - Settings live in a cookie (and localStorage), so pages render in the chosen look with no flash.
+- Reading progress bar, previous/next links and arrow-key navigation. Drafts and scheduled chapters return 404.
 - Reading progress: the current chapter and scroll position are saved every few seconds and when the tab is
   hidden, and restored on any device signed into the same account.
 - Library (`/library`): Reading, Plan to Read and Completed (a story sits on at most one of these), plus custom
