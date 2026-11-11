@@ -1,25 +1,27 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { LoginForm } from "./LoginForm";
+import Link from "next/link";
+import { AuthPanel, type AuthMode } from "@/components/auth/AuthPanel";
+import { AuthShell } from "@/components/auth/AuthShell";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function LoginPage() {
+type SearchParams = Promise<{ mode?: string; next?: string; error?: string }>;
+
+export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+  const sp = await searchParams;
+  const mode: AuthMode = sp.mode === "signup" || sp.mode === "forgot" ? sp.mode : "signin";
+
   return (
-    <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="font-serif text-3xl">Welcome to Obsidian Quill</h1>
-      <p className="mt-2 text-sm text-muted">Sign in to save your library, follow stories, and write.</p>
+    <AuthShell>
       {isSupabaseConfigured() ? (
-        <Suspense>
-          <LoginForm />
-        </Suspense>
+        <AuthPanel initialMode={mode} next={sp.next ?? null} initialError={sp.error ?? null} />
       ) : (
-        <p className="mt-8 rounded-md border border-border bg-surface p-4 text-sm text-muted">
+        <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
           Supabase is not configured. Copy <code>.env.example</code> to <code>.env.local</code> and add your project
-          keys.
+          keys. <Link href="/" className="text-accent underline">Home</Link>
         </p>
       )}
-    </div>
+    </AuthShell>
   );
 }
