@@ -5,6 +5,7 @@ import { Logo } from "./Logo";
 import { NavLinks } from "./nav/NavLinks";
 import { AccountMenu } from "./nav/AccountMenu";
 import { TabBar } from "./nav/TabBar";
+import { AuthSync } from "./nav/AuthSync";
 import { btn } from "./ui/styles";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -65,6 +66,7 @@ export async function SiteHeader() {
           </div>
         </nav>
       </header>
+      {isSupabaseConfigured() && <AuthSync signedIn={Boolean(viewer)} />}
     </>
   );
 }

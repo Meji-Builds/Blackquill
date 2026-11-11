@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, Loader2, MailCheck, RotateCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { btn, input, label } from "@/components/ui/styles";
@@ -35,7 +34,6 @@ function safeNext(next: string | null) {
  * clear "check your inbox" screen, so nobody is left looking at a filled-in form wondering whether it worked.
  */
 export function AuthPanel({ initialMode, next: rawNext, initialError }: { initialMode: AuthMode; next: string | null; initialError: string | null }) {
-  const router = useRouter();
   const next = safeNext(rawNext);
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [penName, setPenName] = useState("");
@@ -80,8 +78,8 @@ export function AuthPanel({ initialMode, next: rawNext, initialError }: { initia
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
         if (error) return setProblem(friendlyAuthError(error.message));
-        router.replace(next);
-        router.refresh();
+        // A full page load, so the header and every other part of the layout render signed in.
+        window.location.assign(next);
         return;
       }
       if (mode === "signup") {
@@ -99,8 +97,7 @@ export function AuthPanel({ initialMode, next: rawNext, initialError }: { initia
           return setProblem({ text: "An account with this email already exists.", action: "signin" });
         }
         if (data.session) {
-          router.replace(next);
-          router.refresh();
+          window.location.assign(next);
           return;
         }
         setSent({ kind: "confirm", email: cleanEmail });

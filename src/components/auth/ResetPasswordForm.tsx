@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { btn, label } from "@/components/ui/styles";
@@ -11,7 +10,6 @@ import { friendlyAuthError } from "./messages";
 
 /** Set a new password after following the reset link (the link signs the reader in for this one step). */
 export function ResetPasswordForm() {
-  const router = useRouter();
   const [state, setState] = useState<"checking" | "ready" | "expired" | "done">("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -66,10 +64,7 @@ export function ResetPasswordForm() {
         <h1 className="mt-6 font-display text-[34px] leading-tight font-semibold">Password updated</h1>
         <p className="mt-3 text-muted">You are signed in. Use your new password next time.</p>
         <button
-          onClick={() => {
-            router.replace("/");
-            router.refresh();
-          }}
+          onClick={() => window.location.assign("/")}
           className={`${btn.primary} mt-8 w-full`}
         >
           Continue reading
