@@ -44,6 +44,20 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
 
+### Build step 8: comic panels
+
+- For featured stories (rows in `comic_enabled_stories`, managed by admins), writers open **Comic panels** from the
+  chapter editor. The chapter is split into 3 to 8 scenes, each with an editable caption and picture prompt.
+- Five style presets (webtoon colour, manga ink, watercolour storybook, noir, painterly fantasy) and an optional
+  reference image (stored privately) that guides every panel's look.
+- Panels are generated one at a time or all at once. Every generation spends from a per-chapter cap (20 by default)
+  enforced in the database; images can only be attached through the generation path, and nothing is shown to
+  readers until the writer approves it. Approved images are stored, so each is generated and paid for once.
+- Readers get a Text / Comic toggle on chapters with approved panels.
+- Image provider: with `OPENAI_API_KEY` set (optionally `OPENAI_IMAGE_MODEL`, default `gpt-image-1`), panels come
+  from the OpenAI Images API; without it, a built-in demo generator draws stylised panels at no cost.
+- Migration `20261115000000_comics.sql`.
+
 ### Build step 7: choice points
 
 - Writers add one choice per chapter from the chapter editor: put the cursor in a paragraph, choose "Add a choice
@@ -164,6 +178,6 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 5. ~~Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings~~
 6. ~~PWA and offline chapter downloads~~
 7. ~~Choice-point builder and inline reader experience, with pick percentages~~
-8. Comic panel pipeline
+8. ~~Comic panel pipeline~~
 9. Writer analytics dashboard, comments, notifications
 10. Moderation tools, polish, launch prep

@@ -8,7 +8,7 @@ import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import { ChoiceBlock } from "./ChoiceBlock";
-import { ChevronLeft, ChevronRight, List, Type } from "lucide-react";
+import { AlignLeft, ChevronLeft, ChevronRight, Images, List, Type } from "lucide-react";
 import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
 import {
   FONTS,
@@ -51,6 +51,7 @@ export function ChapterReader(props: {
   hasSettingsCookie: boolean;
   choice: ChoicePoint | null;
   choiceState: ChoiceState | null;
+  panels: { id: string; caption: string; image_url: string }[];
 }) {
   const { storyId, chapterId, signedIn } = props;
   const [settings, setSettings] = useState<ReaderSettings>(props.initialSettings);
@@ -61,6 +62,10 @@ export function ChapterReader(props: {
   // records where the reader actually was, not the next page's layout.
   const ratio = useRef(props.initialScroll);
   const articleRef = useRef<HTMLElement>(null);
+  const [view, setView] = useState<"text" | "comic">("text");
+  const comicRef = useRef<HTMLOListElement>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
   // With a choice point, the text after it stays hidden until the reader picks or skips.
   const [choiceResolved, setChoiceResolved] = useState(!props.choice || Boolean(props.choiceState?.picked));
   const gated = useRef(!choiceResolved);
@@ -138,7 +143,9 @@ export function ChapterReader(props: {
     logReadingEvent(storyId, chapterId, "open").catch(() => {});
     const tryFinish = () => {
       // "Reached the end" means the last lines of the chapter text are on screen.
-      const end = articleRef.current?.getBoundingClientRect().bottom ?? Infinity;
+      // In comic view the end of the chapter is the last panel, not the (hidden) text.
+      const endEl = viewRef.current === "comic" ? comicRef.current : articleRef.current;
+      const end = endEl?.getBoundingClientRect().bottom ?? Infinity;
       if (gated.current) return; // the end of the visible text is not the end of the chapter yet
       if (finished || inFlight || end > window.innerHeight + 40 || Date.now() - openedAt < needMs) return;
       inFlight = true;
@@ -244,7 +251,47 @@ export function ChapterReader(props: {
         </div>
         {panel && <ReaderSettingsPanel settings={settings} onChange={update} onClose={() => setPanel(false)} />}
 
+        {props.panels.length > 0 && (
+          <div role="tablist" aria-label="Reading mode" className="mt-6 inline-grid grid-cols-2 rounded-xl p-1 ring-1" style={{ boxShadow: `inset 0 0 0 1px ${t.border}` }}>
+            {(["text", "comic"] as const).map((v) => (
+              <button
+                key={v}
+                role="tab"
+                aria-selected={view === v}
+                onClick={() => setView(v)}
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium transition"
+                style={view === v ? { background: "var(--accent-strong)", color: "#fff" } : { color: t.muted }}
+              >
+                {v === "text" ? <AlignLeft className="h-4 w-4" /> : <Images className="h-4 w-4" />}
+                {v === "text" ? "Text" : `Comic · ${props.panels.length}`}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {view === "comic" && (
+          <ol ref={comicRef} className="mt-8 space-y-8">
+            {props.panels.map((p, i) => (
+              <li key={p.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- approved panels come from storage */}
+                <img src={p.image_url} alt={p.caption || `Panel ${i + 1}`} loading={i < 2 ? "eager" : "lazy"} className="w-full rounded-xl" />
+                {p.caption && (
+                  <p className="mt-3 text-center font-serif text-[15px] italic" style={{ color: t.muted }}>
+                    {p.caption}
+                  </p>
+                )}
+              </li>
+            ))}
+            <li className="text-center">
+              <button onClick={() => setView("text")} className="text-sm underline" style={{ color: t.muted }}>
+                Read the full chapter text
+              </button>
+            </li>
+          </ol>
+        )}
+
         <article
+          hidden={view === "comic"}
           ref={articleRef}
           className="mt-10 space-y-[1em]"
           style={

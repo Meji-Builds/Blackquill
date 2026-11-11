@@ -86,6 +86,15 @@ export default async function ChapterPage({ params }: { params: Params }) {
     .eq("chapter_id", chapter.id)
     .maybeSingle();
   const choice = toChoicePoint(choiceRow);
+
+  // Approved comic panels (readers only ever see approved ones; the author's drafts are filtered out here too).
+  const { data: panelRows } = await supabase
+    .from("comic_panels")
+    .select("id, scene_index, caption, image_url")
+    .eq("chapter_id", chapter.id)
+    .eq("status", "approved")
+    .order("scene_index");
+  const panels = (panelRows ?? []).filter((p) => p.image_url) as { id: string; caption: string; image_url: string }[];
   let choiceState: ChoiceState | null = null;
   if (choice) {
     const { data } = await supabase.rpc("choice_state", {
@@ -117,6 +126,7 @@ export default async function ChapterPage({ params }: { params: Params }) {
       signedIn={Boolean(user)}
       initialSettings={parseSettings(settingsRaw)}
       choice={choice}
+      panels={panels}
       choiceState={choiceState}
       hasSettingsCookie={Boolean(settingsRaw)}
       initialScroll={progress && progress.chapter_id === chapter.id ? progress.scroll_position : 0}

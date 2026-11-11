@@ -7,7 +7,7 @@ import { countWords } from "@/lib/studio/text";
 import { paragraphIndexAt, toParagraphs } from "@/lib/reader/text";
 import type { ChoicePoint } from "@/lib/choices/types";
 import { ChoicePointEditor } from "./ChoicePointEditor";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 import type { ChapterRow } from "@/lib/studio/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -359,6 +359,21 @@ export function ChapterEditor({
               <p className={`mt-3 text-sm ${publishMsg.ok ? "text-emerald-300" : "text-danger"}`}>{publishMsg.text}</p>
             )}
           </section>
+        )}
+        {!focus && (
+          <Link
+            href={`/studio/${chapter.story_id}/chapters/${chapter.id}/comic`}
+            className="mt-6 flex items-center gap-4 rounded-lg border border-border bg-surface p-5 transition hover:border-accent/50"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent ring-1 ring-accent/30">
+              <Images className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-xl font-semibold">Comic panels</span>
+              <span className="block text-sm text-muted">Turn this chapter into illustrated panels readers can switch to.</span>
+            </span>
+            <ChevronRight className="h-5 w-5 text-muted" />
+          </Link>
         )}
         {!focus && (
           <ChoicePointEditor

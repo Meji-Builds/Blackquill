@@ -62,7 +62,6 @@ const uuid = (name) => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
-const qn = (s) => (s == null ? "null" : q(s));
 const tagSlug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 
 function rng(seed) {
