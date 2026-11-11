@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { withFonts, publicClient } from "@/lib/seo/site";
+import { coverForShareCard, withFonts, publicClient } from "@/lib/seo/site";
 
 export const alt = "Story on Obsidian Quill";
 export const size = { width: 1200, height: 630 };
@@ -25,7 +25,7 @@ export default async function Image({ params }: { params: Promise<{ storyId: str
   const { data } = supabase && /^[0-9a-f-]{36}$/i.test(storyId)
     ? await supabase
         .from("stories")
-        .select("title, synopsis, rating, profiles!stories_author_id_fkey(username, display_name), story_genres(genres(name))")
+        .select("title, synopsis, rating, cover_url, profiles!stories_author_id_fkey(username, display_name), story_genres(genres(name))")
         .eq("id", storyId)
         .neq("status", "draft")
         .maybeSingle()
@@ -34,6 +34,7 @@ export default async function Image({ params }: { params: Promise<{ storyId: str
     title: string;
     synopsis: string;
     rating: string;
+    cover_url: string | null;
     profiles: { username: string; display_name: string | null } | null;
     story_genres: { genres: { name: string } | null }[];
   } | null;
@@ -41,11 +42,23 @@ export default async function Image({ params }: { params: Promise<{ storyId: str
   const author = story?.profiles ? story.profiles.display_name || story.profiles.username : "";
   const genre = story?.story_genres?.[0]?.genres?.name ?? "";
   const [bg, ink] = SCHEMES[hash(title) % SCHEMES.length];
+  const cover = story && story.rating !== "mature" ? await coverForShareCard(story.cover_url) : null;
   const blurb = story && story.rating !== "mature" ? story.synopsis.replace(/\s+/g, " ").slice(0, 150).replace(/\s+\S*$/, "") : "";
 
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", background: "#0b0a0d", color: "#ece8f1", fontFamily: "Inter" }}>
+        {cover ? (
+          // The writer's own cover, 2:3 like on the site.
+          // eslint-disable-next-line @next/next/no-img-element -- rendered into the share image, not a page
+          <img
+            src={cover}
+            alt=""
+            width={340}
+            height={510}
+            style={{ margin: 60, borderRadius: 18, objectFit: "cover", border: "2px solid rgba(255,255,255,0.12)" }}
+          />
+        ) : (
         <div
           style={{
             width: 360,
@@ -64,6 +77,7 @@ export default async function Image({ params }: { params: Promise<{ storyId: str
           <div style={{ fontFamily: "Cormorant", fontSize: title.length > 24 ? 40 : 52, lineHeight: 1.05, textAlign: "center", color: "#fff" }}>{title}</div>
           {author && <div style={{ marginTop: 18, fontSize: 16, letterSpacing: 4, color: ink, textTransform: "uppercase" }}>{author}</div>}
         </div>
+        )}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 70px 60px 0" }}>
           {genre && <div style={{ fontSize: 24, letterSpacing: 6, color: "#d9b26f", textTransform: "uppercase" }}>{genre}</div>}
           <div style={{ fontFamily: "Cormorant", fontSize: title.length > 30 ? 64 : 84, lineHeight: 1, marginTop: 14 }}>{title}</div>

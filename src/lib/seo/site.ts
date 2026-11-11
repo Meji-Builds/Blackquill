@@ -45,3 +45,39 @@ export async function withFonts<T extends object>(opts: T) {
   const fonts = await ogFonts();
   return fonts.length ? { ...opts, fonts } : opts;
 }
+
+/**
+ * A story's uploaded cover as a data URL the share-image renderer can draw (PNG or JPEG; WebP is converted),
+ * or null to use the generated cover. Never throws: a share card must render even if the cover can't be read.
+ */
+export async function coverForShareCard(coverUrl: string | null): Promise<string | null> {
+  if (!coverUrl) return null;
+  try {
+    const url = new URL(coverUrl, siteUrl() + "/");
+    if (coverUrl.startsWith("/") && process.env.SUPABASE_INTERNAL_URL && process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("/")) {
+      // Local setups proxy Supabase under a path; fetch it directly instead of through ourselves.
+      const prefix = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (coverUrl.startsWith(prefix)) return coverForShareCard(process.env.SUPABASE_INTERNAL_URL.replace(/\/$/, "") + coverUrl.slice(prefix.length));
+    }
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    let bytes = Buffer.from(await res.arrayBuffer());
+    if (bytes.length > 4_000_000) return null;
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50;
+    const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+    let type = isPng ? "image/png" : isJpeg ? "image/jpeg" : null;
+    if (!type || bytes.length > 600_000) {
+      // WebP (or a large file): convert to a modest JPEG when the image library is available.
+      try {
+        const sharp = (await import("sharp")).default;
+        bytes = await sharp(bytes).resize({ width: 680, height: 1020, fit: "cover" }).jpeg({ quality: 82 }).toBuffer();
+        type = "image/jpeg";
+      } catch {
+        if (!type) return null;
+      }
+    }
+    return `data:${type};base64,${bytes.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
