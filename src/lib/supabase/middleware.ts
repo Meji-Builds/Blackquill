@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cookieOptions, isSupabaseConfigured, supabaseEnv } from "./env";
 import { ANON_COOKIE, ANON_ID } from "@/lib/discovery/viewer";
 
-const PROTECTED_PREFIXES = ["/studio", "/library"];
+const PROTECTED_PREFIXES = ["/studio", "/library", "/settings"];
 
 export async function updateSession(request: NextRequest) {
   // Signed-out readers get a random id so discovery counts each of them once. It is set on the request too,
