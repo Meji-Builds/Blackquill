@@ -21,7 +21,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <div aria-hidden="true" className="absolute inset-10 rounded-[28px] border border-white/10" />
         <div className="relative flex h-full flex-col justify-between p-16">
           <Link href="/" className="inline-flex items-center gap-3">
-            <LogoMark className="h-9 w-9" />
+            <LogoMark className="h-11 w-11" id="oq-auth" />
             <span className="font-display text-3xl font-semibold">Obsidian Quill</span>
           </Link>
           <figure className="max-w-md">

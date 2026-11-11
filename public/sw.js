@@ -8,7 +8,7 @@
  *
  * The writer studio, sign-in and auth routes are never cached: editing offline could lose work.
  */
-const VERSION = "v2";
+const VERSION = "v3";
 const OFFLINE = "oq-offline";
 const PAGES = "oq-pages";
 const STATIC = "oq-static";

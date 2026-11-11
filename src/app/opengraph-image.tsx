@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { withFonts } from "@/lib/seo/site";
+import { markDataUrl } from "@/lib/seo/mark";
 
 export const alt = "Obsidian Quill: web novels and light novels";
 export const size = { width: 1200, height: 630 };
@@ -21,8 +22,13 @@ export default async function Image() {
           fontFamily: "Inter",
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- drawn into the share image */}
+        <img src={markDataUrl()} alt="" width={120} height={120} style={{ marginBottom: 28 }} />
         <div style={{ fontSize: 26, letterSpacing: 8, color: "#d9b26f", textTransform: "uppercase" }}>Serialized fiction</div>
-        <div style={{ fontFamily: "Cormorant", fontSize: 128, lineHeight: 1, marginTop: 20 }}>Obsidian Quill</div>
+        <div style={{ display: "flex", fontFamily: "Cormorant", fontSize: 128, lineHeight: 1, marginTop: 20 }}>
+          <span>Obsidian</span>
+          <span style={{ marginLeft: 30, color: "#e6c27a" }}>Quill</span>
+        </div>
         <div style={{ fontSize: 34, color: "#a9a3b5", marginTop: 28, maxWidth: 860 }}>
           Web novels and light novels, discovered by how deeply people read them.
         </div>
