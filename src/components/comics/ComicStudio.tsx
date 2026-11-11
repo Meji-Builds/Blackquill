@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- generated panels come from storage */
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, ImagePlus, Loader2, RefreshCw, Scissors, Sparkles, Wand2, X } from "lucide-react";
+import { AlertCircle, Brush, Check, Image as ImageIcon, ImagePlus, Images, Info, Loader2, RefreshCw, Scissors, X } from "lucide-react";
 import { BackLink } from "@/components/ui/BackLink";
 import { btn, card, textarea } from "@/components/ui/styles";
 import { COMIC_STYLES } from "@/lib/comics/styles";
@@ -75,7 +75,7 @@ export function ComicStudio({
       <div className="mx-auto max-w-3xl px-4 pt-6 pb-12">
         <BackLink href={`/studio/${storyId}/chapters/${chapter.id}`}>Chapter {chapter.number}</BackLink>
         <div className={`${card} mt-4 p-8 text-center`}>
-          <Sparkles className="mx-auto h-10 w-10 text-accent" strokeWidth={1.5} />
+          <Images className="mx-auto h-10 w-10 text-accent" strokeWidth={1.5} />
           <h1 className="mt-4 font-display text-3xl font-semibold">Comic panels are for featured stories</h1>
           <p className="mx-auto mt-2 max-w-md text-muted">
             While comic panels are being tested, they are switched on for a handful of featured stories. When this
@@ -153,7 +153,7 @@ export function ComicStudio({
 
       {provider === "demo" && (
         <p className="mt-5 flex gap-2 rounded-xl border border-border bg-surface p-3 text-sm text-muted">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
           Demo mode: panels are drawn by a built-in generator. Add an OpenAI API key to the server to generate real
           illustrations with the same workflow.
         </p>
@@ -229,7 +229,7 @@ export function ComicStudio({
         <>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <button disabled={batch || pending || remaining === 0} onClick={generateMissing} className={btn.primary}>
-              {batch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+              {batch ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brush className="h-4 w-4" />}
               {batch ? "Generating…" : "Generate all missing panels"}
             </button>
             <button
@@ -296,7 +296,7 @@ function PanelCard({
           <img src={p.image_url} alt={`Panel ${p.scene_index + 1}: ${p.caption}`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted">
-            <Sparkles className="h-8 w-8 opacity-50" strokeWidth={1.5} />
+            <ImageIcon className="h-8 w-8 opacity-50" strokeWidth={1.5} />
             Not generated yet
           </div>
         )}
@@ -344,7 +344,7 @@ function PanelCard({
         )}
         <div className="mt-auto flex flex-wrap gap-2">
           <button disabled={busy || !canGenerate} onClick={onGenerate} className={btn.small} title={canGenerate ? undefined : "No generations left for this chapter"}>
-            {p.image_url ? <RefreshCw className="h-4 w-4" /> : <Wand2 className="h-4 w-4" />}
+            {p.image_url ? <RefreshCw className="h-4 w-4" /> : <Brush className="h-4 w-4" />}
             {p.image_url ? "Regenerate" : "Generate"}
           </button>
           {p.image_url && p.status !== "approved" && (

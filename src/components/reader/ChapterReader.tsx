@@ -8,7 +8,7 @@ import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import { ChoiceBlock } from "./ChoiceBlock";
-import { AlignLeft, ChevronLeft, ChevronRight, Images, Languages, List, Loader2, MessageCircle, Sparkles, Type, Users } from "lucide-react";
+import { AlignLeft, ChevronLeft, ChevronRight, Images, Languages, List, Loader2, MessageCircle, Type, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LanguagePanel } from "./LanguagePanel";
 import { machineTranslate, setReadingLanguage } from "@/app/translation/actions";
@@ -562,7 +562,7 @@ function TranslationNote({
   } else if (shown.kind === "machine") {
     body = (
       <>
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+        <Languages className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           Machine-translated from {from} into {target}; it may miss nuance.{" "}
           <button onClick={onOriginal} className={link}>

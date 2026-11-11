@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check, Languages, Search, Sparkles, Users, X } from "lucide-react";
+import { Check, Languages, Search, Users, X } from "lucide-react";
 import { LANGUAGES, language, languageLabel } from "@/lib/translation/languages";
 import type { ReaderLanguages } from "@/lib/translation/resolve";
 
@@ -116,7 +116,7 @@ export function LanguagePanel({
               </label>
             )}
             <ul className="space-y-1">
-              {machineList.map((code) => row(code, languageLabel(code), "Translated automatically", <Sparkles className="h-3.5 w-3.5" />))}
+              {machineList.map((code) => row(code, languageLabel(code), "Translated automatically", <Languages className="h-3.5 w-3.5" />))}
               {machineList.length === 0 && <li className="px-3 py-2 text-sm text-muted">No matching language.</li>}
             </ul>
           </>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight, Eye, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Eye, Languages, Loader2 } from "lucide-react";
 import { machineTranslate, saveCommunityTranslation } from "@/app/translation/actions";
 import { language, languageLabel, splitParagraphs } from "@/lib/translation/languages";
 import { btn, input } from "@/components/ui/styles";
@@ -198,7 +198,7 @@ export function TranslationEditor(props: {
           </p>
           {props.machine && (
             <button onClick={machineDraft} disabled={drafting} className={`${btn.small} mt-3`}>
-              {drafting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {drafting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
               {drafting ? "Drafting…" : "Start from a machine draft"}
             </button>
           )}
