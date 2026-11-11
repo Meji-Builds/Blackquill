@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { Cover } from "@/components/Cover";
 import { ShelfManager } from "@/components/reader/ShelfManager";
 import { RemoveFromShelf } from "@/components/reader/RemoveFromShelf";
+import { btn } from "@/components/ui/styles";
+import { Download } from "lucide-react";
 
 export const metadata: Metadata = { title: "Library" };
 
@@ -47,28 +49,30 @@ export default async function LibraryPage({ searchParams }: { searchParams: Sear
     .sort((a, b) => b.added_at.localeCompare(a.added_at));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 pt-6 pb-12 sm:pt-10">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="font-serif text-3xl">Your Library</h1>
-        <Link href="/offline" className="text-sm text-accent hover:underline">
-          Downloaded for offline →
+        <h1 className="font-display text-[38px] leading-tight font-semibold">Your Library</h1>
+        <Link href="/offline" className={btn.small}>
+          <Download className="h-4 w-4" /> Downloaded
         </Link>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-border pb-4">
+      <div className="mt-6 flex items-center justify-end">
+        <ShelfManager active={active ? { id: active.id, name: active.name, custom: active.kind === "custom" } : null} />
+      </div>
+      <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto border-b border-border px-4 pb-4 [scrollbar-width:none]">
         {shelves.map((s) => (
           <Link
             key={s.id}
             href={`/library?shelf=${s.id}`}
             aria-current={s.id === active?.id ? "page" : undefined}
-            className={`rounded-full border px-4 py-1.5 text-sm ${
-              s.id === active?.id ? "border-accent bg-accent/15" : "border-border text-muted hover:text-foreground"
+            className={`shrink-0 rounded-full px-4 py-2 text-sm whitespace-nowrap ring-1 transition ${
+              s.id === active?.id ? "bg-accent/15 text-foreground ring-accent/50" : "text-muted ring-border-strong hover:text-foreground"
             }`}
           >
             {s.name} <span className="text-muted">{s.shelf_items.filter((i) => i.stories).length}</span>
           </Link>
         ))}
-        <ShelfManager active={active ? { id: active.id, name: active.name, custom: active.kind === "custom" } : null} />
       </div>
 
       {items.length === 0 ? (
@@ -76,7 +80,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Sear
           Nothing on this shelf yet. Use <span className="text-foreground">Add to library</span> on any story page.
         </p>
       ) : (
-        <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <ul className="mt-6 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5">
           {items.map(({ stories: s }) => {
             const ch = progress.get(s!.id);
             return (

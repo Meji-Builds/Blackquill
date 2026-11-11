@@ -21,12 +21,12 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
   const { data: tags } = await supabase.rpc("popular_tags", { p_limit: 20 });
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="mb-6 font-serif text-3xl">{filters.q ? `Results for “${filters.q}”` : "Browse stories"}</h1>
+    <div className="mx-auto max-w-6xl px-4 pt-6 pb-12 sm:pt-10">
+      <h1 className="mb-6 font-display text-[38px] leading-tight font-semibold">{filters.q ? `Results for “${filters.q}”` : "Browse stories"}</h1>
       <BrowseView path="/browse" filters={filters} />
       {(tags ?? []).length > 0 && (
         <section className="mt-14">
-          <h2 className="font-serif text-xl">Popular tags</h2>
+          <h2 className="font-display text-2xl font-semibold">Popular tags</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {(tags as { slug: string; name: string; uses: number }[]).map((t) => (
               <Link key={t.slug} href={`/tag/${t.slug}`} className="rounded-full border border-border px-3 py-1 text-sm text-muted hover:text-foreground">

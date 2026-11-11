@@ -146,7 +146,7 @@ export function StoryForm({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-accent-strong px-5 py-2 font-medium text-white hover:bg-accent disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 text-sm font-medium text-white shadow-[0_8px_24px_-12px_rgba(143,107,255,0.8)] transition hover:bg-[#9c7dff] disabled:opacity-50"
           >
             {pending ? "Saving…" : submitLabel}
           </button>

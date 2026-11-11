@@ -6,6 +6,9 @@ import { StoryForm } from "@/components/studio/StoryForm";
 import { ChapterList } from "@/components/studio/ChapterList";
 import { StoryActions } from "@/components/studio/StoryActions";
 import { StatusBadge } from "@/components/studio/StatusBadge";
+import { BackLink } from "@/components/ui/BackLink";
+import { btn } from "@/components/ui/styles";
+import { Eye } from "lucide-react";
 import { updateStory } from "../actions";
 import type { ChapterRow, Genre, StoryRow } from "@/lib/studio/types";
 
@@ -54,19 +57,17 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
   const published = list.filter((c) => c.status === "published").length;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <Link href="/studio" className="text-sm text-muted hover:text-foreground">
-        ← Studio
-      </Link>
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="font-serif text-3xl">{s.title}</h1>
+    <div className="mx-auto max-w-5xl px-4 pt-6 pb-12">
+      <BackLink href="/studio">Studio</BackLink>
+      <div className="mt-1 flex flex-wrap items-center gap-3">
+        <h1 className="min-w-0 font-display text-[34px] leading-tight font-semibold sm:text-[40px]">{s.title}</h1>
         <StatusBadge status={s.status} />
-        {s.status !== "draft" && (
-          <Link href={`/story/${s.id}`} className="ml-auto text-sm text-accent hover:underline">
-            View as reader →
-          </Link>
-        )}
       </div>
+      {s.status !== "draft" && (
+        <Link href={`/story/${s.id}`} className={`${btn.small} mt-3`}>
+          <Eye className="h-4 w-4" /> View as reader
+        </Link>
+      )}
       <p className="mt-1 text-sm text-muted">
         {list.length} {list.length === 1 ? "chapter" : "chapters"} · {published} published ·{" "}
         {s.word_count.toLocaleString()} published {s.word_count === 1 ? "word" : "words"}
@@ -95,7 +96,7 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
       </section>
 
       <details className="group mt-12 rounded-lg border border-border bg-surface/50">
-        <summary className="cursor-pointer list-none px-5 py-4 font-serif text-xl">
+        <summary className="cursor-pointer list-none px-5 py-4 font-display text-2xl font-semibold">
           Story details <span className="text-sm text-muted group-open:hidden">(title, cover, genres, tags…)</span>
         </summary>
         <div className="border-t border-border p-5">

@@ -103,7 +103,7 @@ export function ChoicePointEditor({
   if (!draft) {
     return (
       <section className="mt-6 rounded-lg border border-border bg-surface p-5">
-        <h2 className="font-serif text-xl">Choice point</h2>
+        <h2 className="font-display text-2xl font-semibold">Choice point</h2>
         <p className="mt-1 text-sm text-muted">
           Let readers choose what happens next. Put your cursor in a paragraph, then add a choice after it. Each
           option leads to a short scene, and every path rejoins the main story.
@@ -128,7 +128,7 @@ export function ChoicePointEditor({
   return (
     <section className="mt-6 rounded-lg border border-accent/30 bg-surface p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-serif text-xl">Choice point</h2>
+        <h2 className="font-display text-2xl font-semibold">Choice point</h2>
         {dirty && <span className="text-xs text-amber-300">Unsaved changes</span>}
       </div>
 
@@ -201,7 +201,7 @@ export function ChoicePointEditor({
         <button
           onClick={save}
           disabled={pending || !dirty}
-          className="rounded-md bg-accent-strong px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 text-sm font-medium text-white shadow-[0_8px_24px_-12px_rgba(143,107,255,0.8)] transition hover:bg-[#9c7dff] disabled:opacity-50"
         >
           {pending ? "Saving…" : "Save choice"}
         </button>

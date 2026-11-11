@@ -8,8 +8,8 @@ export const dynamic = "force-static";
 
 export default function OfflinePage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-serif text-3xl">Downloaded stories</h1>
+    <div className="mx-auto max-w-3xl px-4 pt-6 pb-12 sm:pt-10">
+      <h1 className="font-display text-[38px] leading-tight font-semibold">Downloaded stories</h1>
       <p className="mt-1 text-sm text-muted">Saved on this device for reading without a connection.</p>
       <OfflineLibrary />
     </div>

@@ -8,6 +8,7 @@ import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import { ChoiceBlock } from "./ChoiceBlock";
+import { ChevronLeft, ChevronRight, List, Type } from "lucide-react";
 import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
 import {
   FONTS,
@@ -179,18 +180,18 @@ export function ChapterReader(props: {
   const nav = (
     <nav className="flex items-center justify-between gap-3 text-sm">
       {props.prevNumber ? (
-        <Link href={`/story/${storyId}/chapter/${props.prevNumber}`} className="rounded-md border px-4 py-2" style={{ borderColor: t.border }}>
-          ← Previous
+        <Link href={`/story/${storyId}/chapter/${props.prevNumber}`} className="inline-flex h-11 items-center gap-1 rounded-lg border px-4 font-medium" style={{ borderColor: t.border }}>
+          <ChevronLeft className="h-4 w-4" /> Previous
         </Link>
       ) : (
         <span />
       )}
-      <Link href={`/story/${storyId}`} style={{ color: t.muted }} className="hover:underline">
-        Contents
+      <Link href={`/story/${storyId}`} style={{ color: t.muted }} className="inline-flex items-center gap-1.5 hover:underline">
+        <List className="h-4 w-4" /> Contents
       </Link>
       {props.nextNumber ? (
-        <Link href={`/story/${storyId}/chapter/${props.nextNumber}`} className="rounded-md border px-4 py-2" style={{ borderColor: t.border }}>
-          Next →
+        <Link href={`/story/${storyId}/chapter/${props.nextNumber}`} className="inline-flex h-11 items-center gap-1 rounded-lg bg-[var(--accent-strong)] px-5 font-medium text-white">
+          Next <ChevronRight className="h-4 w-4" />
         </Link>
       ) : (
         <span />
@@ -235,10 +236,10 @@ export function ChapterReader(props: {
             onClick={() => setPanel((p) => !p)}
             aria-expanded={panel}
             aria-label="Reading settings"
-            className="rounded-md border px-3 py-1.5 text-sm"
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium"
             style={{ borderColor: t.border }}
           >
-            Aa
+            <Type className="h-4 w-4" /> Aa
           </button>
         </div>
         {panel && <ReaderSettingsPanel settings={settings} onChange={update} onClose={() => setPanel(false)} />}

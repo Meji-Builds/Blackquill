@@ -19,7 +19,7 @@ export function ShelfManager({ active }: { active: { id: string; name: string; c
   }
 
   return (
-    <div className="ml-auto flex items-center gap-2 text-sm">
+    <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
       {active?.custom && (
         <>
           <button

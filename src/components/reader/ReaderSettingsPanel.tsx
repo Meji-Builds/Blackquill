@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import {
   BACKGROUNDS,
   DEFAULT_SETTINGS,
@@ -66,8 +67,8 @@ export function ReaderSettingsPanel({
     >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-serif text-lg">Reading settings</h2>
-        <button onClick={onClose} aria-label="Close settings" className="rounded px-2 py-1 text-muted hover:bg-surface-2 hover:text-foreground">
-          ✕
+        <button onClick={onClose} aria-label="Close settings" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground">
+          <X className="h-5 w-5" />
         </button>
       </div>
 
@@ -168,7 +169,7 @@ export function ReaderSettingsPanel({
               aria-label="Smaller text"
               disabled={sizeIndex <= 0}
               onClick={() => set({ size: SIZES[sizeIndex - 1] })}
-              className="rounded-md border border-border px-3 py-1 disabled:opacity-40"
+              className="inline-flex h-9 min-w-10 items-center justify-center rounded-lg border border-border-strong px-3 disabled:opacity-40"
             >
               A−
             </button>
@@ -177,7 +178,7 @@ export function ReaderSettingsPanel({
               aria-label="Larger text"
               disabled={sizeIndex >= SIZES.length - 1}
               onClick={() => set({ size: SIZES[sizeIndex + 1] })}
-              className="rounded-md border border-border px-3 py-1 disabled:opacity-40"
+              className="inline-flex h-9 min-w-10 items-center justify-center rounded-lg border border-border-strong px-3 disabled:opacity-40"
             >
               A+
             </button>

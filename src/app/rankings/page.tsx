@@ -63,8 +63,8 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
   const genreName = new Map(genreList.map((g) => [g.slug, g.name]));
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="font-serif text-3xl">Rankings</h1>
+    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 sm:pt-10">
+      <h1 className="font-display text-[38px] leading-tight font-semibold">Rankings</h1>
       <p className="mt-1 text-sm text-muted">
         Ranked by how deeply people read: chapters finished, coming back and adding to a library count; opening a
         story alone does not.
@@ -110,7 +110,7 @@ export default async function RankingsPage({ searchParams }: { searchParams: Sea
           {rows.map((s, i) => (
             <li key={s.id}>
               <Link href={`/story/${s.id}`} className="group flex gap-4 py-4">
-                <span className="w-7 shrink-0 pt-1 text-right font-serif text-xl text-muted tabular-nums">{i + 1}</span>
+                <span className="w-7 shrink-0 pt-1 text-right font-display text-2xl font-semibold text-muted tabular-nums">{i + 1}</span>
                 <Cover url={s.cover_url} title={s.title} className="w-16 shrink-0 sm:w-20" />
                 <div className="min-w-0 flex-1">
                   <p className="font-serif text-lg leading-snug group-hover:text-accent">{s.title}</p>

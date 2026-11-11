@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CheckCircle2, Download, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { btn } from "@/components/ui/styles";
 import { downloadStory, getOfflineStory, offlineSupported, removeOfflineStory, type OfflineStory } from "@/lib/offline/downloads";
 
 type State =
@@ -49,40 +51,45 @@ export function OfflineButton({
   }
 
   async function remove() {
+    if (!window.confirm("Remove the offline copy of this story from this device?")) return;
     setError(null);
     await removeOfflineStory(storyId);
     setState({ kind: "none" });
   }
 
   const missing = state.kind === "saved" ? chapters.filter((n) => !state.story.chapters.includes(n)).length : 0;
-  const button = "rounded-md border px-4 py-2 text-sm";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="relative">
+      {state.kind === "checking" && (
+        <span className={`${btn.secondary} w-full text-muted`}>
+          <Download className="h-4 w-4" /> Offline
+        </span>
+      )}
       {state.kind === "none" && (
-        <button onClick={save} className={`${button} border-border hover:bg-surface-2`}>
-          ↓ Download for offline
+        <button onClick={save} className={`${btn.secondary} w-full`}>
+          <Download className="h-4 w-4" /> Download
         </button>
       )}
       {state.kind === "saving" && (
-        <span role="status" className={`${button} border-border text-muted`}>
-          Saving {state.done} of {state.total}…
+        <span role="status" className={`${btn.secondary} w-full text-muted`}>
+          <Loader2 className="h-4 w-4 animate-spin" /> {state.done}/{state.total}
         </span>
       )}
       {state.kind === "saved" &&
         (missing > 0 ? (
-          <button onClick={save} className={`${button} border-accent/50 text-accent hover:bg-accent/10`}>
-            ↓ Update offline copy ({missing} new)
+          <button onClick={save} className={`${btn.secondary} w-full border-accent/50 text-accent`}>
+            <RefreshCw className="h-4 w-4" /> Update ({missing} new)
           </button>
         ) : (
-          <span className={`${button} border-emerald-400/40 text-emerald-300`}>✓ Saved offline</span>
+          <button onClick={remove} title="Saved for offline reading. Tap to remove." className={`${btn.secondary} group w-full text-success`}>
+            <CheckCircle2 className="h-4 w-4 group-hover:hidden" />
+            <Trash2 className="hidden h-4 w-4 group-hover:block" />
+            <span className="group-hover:hidden">Saved offline</span>
+            <span className="hidden group-hover:inline">Remove</span>
+          </button>
         ))}
-      {state.kind === "saved" && (
-        <button onClick={remove} className="text-sm text-muted hover:text-danger">
-          Remove
-        </button>
-      )}
-      {error && <p className="w-full text-sm text-danger">{error}</p>}
+      {error && <p className="absolute top-full mt-1 w-64 text-xs text-danger">{error}</p>}
     </div>
   );
 }

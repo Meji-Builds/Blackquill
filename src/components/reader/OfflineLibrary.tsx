@@ -62,7 +62,7 @@ export function OfflineLibrary() {
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2 text-sm">
                   {s.chapters.slice(0, 1).map((n) => (
-                    <a key={n} href={chapterUrl(s.id, n)} className="rounded-md bg-accent-strong px-3 py-1 text-white hover:bg-accent">
+                    <a key={n} href={chapterUrl(s.id, n)} className="inline-flex h-9 items-center rounded-lg bg-accent-strong px-3 text-sm font-medium text-white hover:bg-[#9c7dff]">
                       Read from chapter {n}
                     </a>
                   ))}

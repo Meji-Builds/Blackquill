@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Cover } from "@/components/Cover";
-import { StatusBadge } from "@/components/studio/StatusBadge";
 import { ShelfButton, type ShelfOption } from "@/components/reader/ShelfButton";
 import { OfflineButton } from "@/components/reader/OfflineButton";
+import { Expandable } from "@/components/reader/Expandable";
+import { ChapterIndex } from "@/components/reader/ChapterIndex";
+import { btn } from "@/components/ui/styles";
+import { BookOpen, BookmarkPlus, CalendarDays, Clock, ListOrdered } from "lucide-react";
 import { readingMinutes } from "@/lib/reader/text";
 
 type Params = Promise<{ storyId: string }>;
@@ -87,122 +90,135 @@ export default async function StoryPage({ params }: { params: Params }) {
       }))
     : null;
 
+  const authorName = author ? author.display_name || author.username : null;
+  const readHref = resume
+    ? `/story/${story.id}/chapter/${resume.number}`
+    : first
+      ? `/story/${story.id}/chapter/${first.number}`
+      : null;
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="grid gap-8 sm:grid-cols-[200px_1fr]">
-        <Cover url={story.cover_url} title={story.title} className="w-40 sm:w-full" />
-        <div>
-          <h1 className="font-serif text-3xl sm:text-4xl">{story.title}</h1>
-          {author && (
-            <p className="mt-2 text-muted">
-              by <span className="text-foreground">{author.display_name || author.username}</span>{" "}
-              <span className="text-sm">@{author.username}</span>
-            </p>
+    <div className="mx-auto max-w-5xl px-4 pt-6 pb-12 sm:pt-10">
+      <div className="grid grid-cols-[112px_1fr] gap-x-5 gap-y-6 sm:grid-cols-[220px_1fr] sm:gap-x-10">
+        <Cover url={story.cover_url} title={story.title} author={authorName} className="w-full self-start sm:row-span-2" />
+
+        <div className="min-w-0 self-center sm:self-start">
+          {genres[0] && (
+            <Link href={`/genre/${genres[0].slug}`} className="text-xs font-semibold tracking-[0.18em] text-gold uppercase hover:underline">
+              {genres[0].name}
+            </Link>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
-            <StatusBadge status={story.status} />
-            {story.rating !== "everyone" && (
-              <span className="rounded-full border border-border px-2 py-0.5 text-xs capitalize">{story.rating}</span>
-            )}
-            <span>
-              {list.length} {list.length === 1 ? "chapter" : "chapters"} · {story.word_count.toLocaleString()} words · about{" "}
-              {readingMinutes(story.word_count)} min
-            </span>
-            {story.last_chapter_at && <span>· Updated {new Date(story.last_chapter_at).toLocaleDateString()}</span>}
+          <h1 className="mt-1 font-display text-[30px] leading-[1.05] font-semibold sm:text-[46px]">{story.title}</h1>
+          {author && (
+            <Link href={`/author/${author.username}`} className="mt-2 inline-block text-sm text-muted hover:text-foreground sm:text-base">
+              by <span className="font-medium text-foreground">{authorName}</span>
+            </Link>
+          )}
+          <div className="mt-3 hidden flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted sm:flex">
+            <Stats story={story} chapters={list.length} />
+          </div>
+        </div>
+
+        <div className="col-span-2 sm:col-span-1 sm:col-start-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted sm:hidden">
+            <Stats story={story} chapters={list.length} />
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {resume ? (
-              <Link
-                href={`/story/${story.id}/chapter/${resume.number}`}
-                className="rounded-md bg-accent-strong px-5 py-2 font-medium text-white hover:bg-accent"
-              >
-                Continue: Chapter {resume.number}
-              </Link>
-            ) : first ? (
-              <Link
-                href={`/story/${story.id}/chapter/${first.number}`}
-                className="rounded-md bg-accent-strong px-5 py-2 font-medium text-white hover:bg-accent"
-              >
-                Start reading
+          <div className="mt-5 grid gap-2 sm:mt-0 sm:flex sm:flex-wrap">
+            {readHref ? (
+              <Link href={readHref} className={`${btn.primary} w-full sm:w-auto`}>
+                <BookOpen className="h-4 w-4" />
+                {resume ? `Continue · Chapter ${resume.number}` : "Start reading"}
               </Link>
             ) : (
-              <span className="rounded-md border border-border px-5 py-2 text-muted">No chapters yet</span>
+              <span className={`${btn.secondary} pointer-events-none w-full text-muted sm:w-auto`}>No chapters yet</span>
             )}
-            {shelves ? (
-              <ShelfButton storyId={story.id} shelves={shelves} />
-            ) : (
-              <Link
-                href={`/login?next=/story/${story.id}`}
-                className="rounded-md border border-border px-4 py-2 hover:bg-surface-2"
-              >
-                Sign in to add to library
-              </Link>
-            )}
-            <OfflineButton
-              storyId={story.id}
-              title={story.title}
-              coverUrl={story.cover_url}
-              chapters={list.map((c) => c.number)}
-            />
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              {shelves ? (
+                <ShelfButton storyId={story.id} shelves={shelves} />
+              ) : (
+                <Link href={`/login?next=/story/${story.id}`} className={btn.secondary}>
+                  <BookmarkPlus className="h-4 w-4" /> Library
+                </Link>
+              )}
+              <OfflineButton storyId={story.id} title={story.title} coverUrl={story.cover_url} chapters={list.map((c) => c.number)} />
+            </div>
           </div>
+
+          {story.synopsis && (
+            <div className="mt-6 font-serif text-[17px] leading-relaxed text-foreground/90">
+              <Expandable lines={5}>
+                {(story.synopsis as string).split(/\n\s*\n/).map((p: string, i: number) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </Expandable>
+            </div>
+          )}
 
           {(genres.length > 0 || tags.length > 0) && (
-            <div className="mt-6 flex flex-wrap gap-2 text-sm">
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
               {genres.map((g) => (
-                <Link key={g.slug} href={`/genre/${g.slug}`} className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1 hover:bg-accent/20">
+                <Link key={g.slug} href={`/genre/${g.slug}`} className="rounded-full bg-accent/12 px-3 py-1.5 font-medium text-accent ring-1 ring-accent/25 hover:bg-accent/20">
                   {g.name}
                 </Link>
               ))}
               {tags.map((t) => (
-                <Link key={t.slug} href={`/tag/${t.slug}`} className="rounded-full border border-border px-3 py-1 text-muted hover:text-foreground">
+                <Link key={t.slug} href={`/tag/${t.slug}`} className="rounded-full px-3 py-1.5 text-muted ring-1 ring-border-strong hover:text-foreground">
                   #{t.name}
                 </Link>
-              ))}
-            </div>
-          )}
-
-          {story.synopsis && (
-            <div className="mt-6 space-y-3 font-serif text-lg leading-relaxed text-foreground/90">
-              {(story.synopsis as string).split(/\n\s*\n/).map((p: string, i: number) => (
-                <p key={i}>{p}</p>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      <section className="mt-12">
-        <h2 className="font-serif text-2xl">Chapters</h2>
-        {list.length === 0 ? (
-          <p className="mt-4 text-muted">The author has not published a chapter yet.</p>
-        ) : (
-          <ol className="mt-4 divide-y divide-border rounded-lg border border-border bg-surface">
-            {list.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/story/${story.id}/chapter/${c.number}`}
-                  className="flex items-baseline gap-4 px-4 py-3 hover:bg-surface-2"
-                >
-                  <span className="w-8 shrink-0 text-right font-mono text-sm text-muted">{c.number}</span>
-                  <span className="min-w-0 flex-1 truncate">
-                    {c.title || `Chapter ${c.number}`}
-                    {(c.choice_points as unknown as { id: string } | null) && (
-                      <span className="ml-2 rounded-full border border-accent/40 px-2 py-0.5 text-xs text-accent">
-                        Choice
-                      </span>
-                    )}
-                    {resume?.id === c.id && <span className="ml-2 text-xs text-accent">You are here</span>}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted">
-                    {c.published_at && new Date(c.published_at).toLocaleDateString()}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <div className="mt-12">
+        <ChapterIndex
+          storyId={story.id}
+          currentId={resume?.id}
+          chapters={list.map((c) => ({
+            id: c.id,
+            number: c.number,
+            title: c.title,
+            published_at: c.published_at,
+            hasChoice: Boolean(c.choice_points as unknown as { id: string } | null),
+          }))}
+        />
+      </div>
     </div>
+  );
+}
+
+function Stats({
+  story,
+  chapters,
+}: {
+  story: { status: string; rating: string; word_count: number; last_chapter_at: string | null };
+  chapters: number;
+}) {
+  const item = "inline-flex items-center gap-1.5";
+  return (
+    <>
+      <span className={item}>
+        <span className={`h-2 w-2 rounded-full ${story.status === "completed" ? "bg-accent" : story.status === "hiatus" ? "bg-warning" : "bg-success"}`} />
+        {story.status === "completed" ? "Complete" : story.status === "hiatus" ? "On hiatus" : "Ongoing"}
+      </span>
+      <span className={item}>
+        <ListOrdered className="h-4 w-4" /> {chapters} {chapters === 1 ? "chapter" : "chapters"}
+      </span>
+      <span className={item}>
+        <Clock className="h-4 w-4" /> {readingMinutes(story.word_count) >= 60
+          ? `${Math.round(readingMinutes(story.word_count) / 60)} h read`
+          : `${readingMinutes(story.word_count)} min read`}
+      </span>
+      {story.rating !== "everyone" && (
+        <span className={`${item} rounded-full px-2 py-0.5 text-xs capitalize ring-1 ring-border-strong`}>{story.rating}</span>
+      )}
+      {story.last_chapter_at && (
+        <span className={item}>
+          <CalendarDays className="h-4 w-4" /> Updated {new Date(story.last_chapter_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+        </span>
+      )}
+    </>
   );
 }

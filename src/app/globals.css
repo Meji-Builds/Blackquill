@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
-/* Obsidian Quill: dark and mysterious. A quill with an obsidian edge. */
+/* Obsidian Quill: dark and mysterious. A quill with an obsidian edge.
+   Display: Cormorant Garamond (headings). Story titles: Literata. Interface: Inter. All self-hosted. */
 :root {
   --background: #0b0a0d;
-  --surface: #141218;
-  --surface-2: #1c1921;
-  --border: #2a2630;
-  --foreground: #e9e5ee;
-  --muted: #9a93a5;
+  --surface: #131117;
+  --surface-2: #1b1820;
+  --surface-3: #24202b;
+  --border: #29252f;
+  --border-strong: #3a3442;
+  --foreground: #ece8f1;
+  --muted: #9d96a8;
   --accent: #b69cff;
   --accent-strong: #8f6bff;
+  --gold: #d9b26f;
+  --success: #6ee7b7;
+  --warning: #fcd34d;
   --danger: #ff6b7d;
 }
 
@@ -17,18 +23,49 @@
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
+  --color-gold: var(--gold);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Literata", "Iowan Old Style", Georgia, serif;
+  --font-display: "Cormorant Garamond", "Literata", Georgia, serif;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

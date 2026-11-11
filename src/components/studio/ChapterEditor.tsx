@@ -7,6 +7,7 @@ import { countWords } from "@/lib/studio/text";
 import { paragraphIndexAt, toParagraphs } from "@/lib/reader/text";
 import type { ChoicePoint } from "@/lib/choices/types";
 import { ChoicePointEditor } from "./ChoicePointEditor";
+import { ChevronLeft } from "lucide-react";
 import type { ChapterRow } from "@/lib/studio/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -228,8 +229,9 @@ export function ChapterEditor({
       <div className={`sticky ${focus ? "top-0" : "top-14"} z-10 border-b border-border bg-background/90 backdrop-blur`}>
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-sm">
           {!focus && (
-            <Link href={`/studio/${chapter.story_id}`} className="truncate text-muted hover:text-foreground">
-              ← {storyTitle}
+            <Link href={`/studio/${chapter.story_id}`} className="-ml-2 inline-flex min-w-0 items-center gap-0.5 rounded-lg py-1 pr-2 pl-1 text-muted hover:bg-surface-2 hover:text-foreground">
+              <ChevronLeft className="h-5 w-5 shrink-0" />
+              <span className="truncate">{storyTitle}</span>
             </Link>
           )}
           <span className="font-mono text-muted">Ch. {chapter.number}</span>
@@ -284,7 +286,7 @@ export function ChapterEditor({
           maxLength={200}
           placeholder={`Chapter ${chapter.number} title`}
           aria-label="Chapter title"
-          className="mt-8 w-full bg-transparent font-serif text-3xl outline-none placeholder:text-muted/60"
+          className="mt-8 w-full bg-transparent font-display text-[38px] leading-tight font-semibold outline-none placeholder:text-muted/60"
         />
         <textarea
           value={body}
@@ -304,7 +306,7 @@ export function ChapterEditor({
 
         {!focus && (
           <section className="mt-10 rounded-lg border border-border bg-surface p-5">
-            <h2 className="font-serif text-xl">Publishing</h2>
+            <h2 className="font-display text-2xl font-semibold">Publishing</h2>
             <p className="mt-1 text-sm text-muted">
               {status === "published" && "This chapter is live. Edits go live as they save."}
               {status === "scheduled" &&
@@ -318,7 +320,7 @@ export function ChapterEditor({
                 <button
                   disabled={publishing}
                   onClick={() => runPublish("publish")}
-                  className="rounded-md bg-accent-strong px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:opacity-60"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 text-sm font-medium text-white shadow-[0_8px_24px_-12px_rgba(143,107,255,0.8)] transition hover:bg-[#9c7dff] disabled:opacity-50"
                 >
                   Publish now
                 </button>
@@ -331,13 +333,13 @@ export function ChapterEditor({
                       type="datetime-local"
                       value={scheduleValue}
                       onChange={(e) => setScheduleValue(e.target.value)}
-                      className="mt-1 rounded-md border border-border bg-background px-2 py-1.5 [color-scheme:dark]"
+                      className="mt-1.5 h-11 rounded-lg border border-border-strong bg-background px-3 [color-scheme:dark]"
                     />
                   </label>
                   <button
                     disabled={publishing || !scheduleValue}
                     onClick={() => runPublish("schedule")}
-                    className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface-2 disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-2 px-4 text-sm font-medium text-foreground transition hover:bg-surface-3 disabled:opacity-50"
                   >
                     {status === "scheduled" ? "Reschedule" : "Schedule"}
                   </button>
@@ -347,7 +349,7 @@ export function ChapterEditor({
                 <button
                   disabled={publishing}
                   onClick={() => runPublish("unpublish")}
-                  className="rounded-md border border-border px-4 py-2 text-sm text-muted hover:bg-surface-2 hover:text-foreground disabled:opacity-60"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface-2 px-4 text-sm font-medium text-foreground transition hover:bg-surface-3 disabled:opacity-50 text-muted"
                 >
                   {status === "scheduled" ? "Cancel schedule" : "Unpublish"}
                 </button>

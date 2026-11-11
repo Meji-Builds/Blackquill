@@ -85,7 +85,7 @@ export function LoginForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-accent"
+            className="mt-1.5 h-11 w-full rounded-lg border border-border-strong bg-surface px-3.5 text-[15px] outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </label>
         <label className="block text-sm">
@@ -97,7 +97,7 @@ export function LoginForm() {
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-accent"
+            className="mt-1.5 h-11 w-full rounded-lg border border-border-strong bg-surface px-3.5 text-[15px] outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
           />
         </label>
         {error && <p className="text-sm text-danger">{error}</p>}

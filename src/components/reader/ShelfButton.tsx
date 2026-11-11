@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { setStoryShelves } from "@/app/reader/actions";
+import { BookmarkCheck, BookmarkPlus, Check, ChevronDown } from "lucide-react";
+import { btn } from "@/components/ui/styles";
 
 export interface ShelfOption {
   id: string;
@@ -51,41 +53,45 @@ export function ShelfButton({ storyId, shelves }: { storyId: string; shelves: Sh
   }
 
   const current = items.filter((s) => s.on);
-  const label = current.length === 0 ? "Add to library" : current.map((s) => s.name).join(", ");
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className={`max-w-xs truncate rounded-md border px-4 py-2 ${
-          current.length ? "border-accent/50 text-accent" : "border-border"
-        } hover:bg-surface-2`}
+        aria-haspopup="menu"
+        className={`${btn.secondary} w-full ${current.length ? "border-accent/50 text-accent" : ""}`}
       >
-        {current.length ? "✓ " : "+ "}
-        {label}
+        {current.length ? <BookmarkCheck className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
+        <span className="max-w-[9rem] truncate">{current.length ? current.map((s) => s.name).join(", ") : "Library"}</span>
+        <ChevronDown className={`h-4 w-4 opacity-60 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-20 mt-2 w-60 rounded-md border border-border bg-surface p-1 shadow-xl">
-          {items.map((s, i) => (
-            <div key={s.id}>
-              {i > 0 && DEFAULTS.includes(items[i - 1].kind) && !DEFAULTS.includes(s.kind) && (
-                <div className="my-1 h-px bg-border" />
-              )}
-              <label className="flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm hover:bg-surface-2">
-                <input
-                  type={DEFAULTS.includes(s.kind) ? "radio" : "checkbox"}
-                  name={DEFAULTS.includes(s.kind) ? `status-${storyId}` : undefined}
-                  checked={s.on}
+        <div role="menu" className="absolute left-0 z-20 mt-2 w-64 rounded-2xl border border-border bg-surface-2 p-1.5 shadow-2xl shadow-black/60">
+          {items.map((s, i) => {
+            const isDefault = DEFAULTS.includes(s.kind);
+            return (
+              <div key={s.id}>
+                {i > 0 && DEFAULTS.includes(items[i - 1].kind) && !isDefault && <div className="my-1.5 h-px bg-border" />}
+                <button
+                  role="menuitemcheckbox"
+                  aria-checked={s.on}
                   disabled={pending}
-                  onClick={() => DEFAULTS.includes(s.kind) && s.on && toggle(s.id)}
-                  onChange={() => !(DEFAULTS.includes(s.kind) && s.on) && toggle(s.id)}
-                  className="accent-[var(--accent-strong)]"
-                />
-                {s.name}
-              </label>
-            </div>
-          ))}
+                  onClick={() => toggle(s.id)}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-surface-3"
+                >
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center border ${isDefault ? "rounded-full" : "rounded-md"} ${
+                      s.on ? "border-accent bg-accent text-background" : "border-border-strong"
+                    }`}
+                  >
+                    {s.on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                  </span>
+                  {s.name}
+                </button>
+              </div>
+            );
+          })}
           {error && <p className="px-3 py-2 text-xs text-danger">{error}</p>}
         </div>
       )}

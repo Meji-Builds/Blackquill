@@ -1,55 +1,76 @@
 import Link from "next/link";
+import { cache } from "react";
+import { Search } from "lucide-react";
 import { Logo } from "./Logo";
+import { NavLinks } from "./nav/NavLinks";
+import { AccountMenu } from "./nav/AccountMenu";
+import { TabBar } from "./nav/TabBar";
+import { btn } from "./ui/styles";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+export interface Viewer {
+  username: string;
+  penName: string;
+  isAdmin: boolean;
+}
+
+/** The signed-in reader, looked up once per request however many components ask. */
+export const getViewer = cache(async (): Promise<Viewer | null> => {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("username, display_name, is_admin")
+    .eq("id", user.id)
+    .single();
+  if (!data) return null;
+  return { username: data.username, penName: data.display_name || data.username, isAdmin: data.is_admin };
+});
+
 export async function SiteHeader() {
-  let username: string | null = null;
-  let signedIn = false;
-  if (isSupabaseConfigured()) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      signedIn = true;
-      const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
-      username = data?.username ?? null;
-    }
-  }
+  const viewer = await getViewer();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6">
-        <Link href="/" aria-label="Obsidian Quill home" className="shrink-0">
-          <Logo compact={signedIn} />
-        </Link>
-        <div className="flex min-w-0 flex-1 items-center gap-4 text-sm whitespace-nowrap text-muted sm:gap-5">
-          <Link href="/browse" className="hover:text-foreground">Browse</Link>
-          <Link href="/rankings" className="hidden hover:text-foreground sm:inline">
-            Rankings
+    <>
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/80 backdrop-blur-xl">
+        <nav className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4" aria-label="Main">
+          <Link href="/" aria-label="Obsidian Quill home" className="mr-2 shrink-0 rounded-lg">
+            <Logo />
           </Link>
-          {signedIn && <Link href="/library" className="hover:text-foreground">Library</Link>}
-          {signedIn && <Link href="/studio" className="hover:text-foreground">Write</Link>}
-        </div>
-        {signedIn ? (
-          <div className="flex shrink-0 items-center gap-3 text-sm">
-            <span className="hidden text-muted md:inline">@{username}</span>
-            <form action="/auth/signout" method="post">
-              <button className="whitespace-nowrap text-muted hover:text-foreground sm:rounded-md sm:border sm:border-border sm:px-3 sm:py-1.5 sm:text-foreground sm:hover:bg-surface-2">
-                Sign out
-              </button>
-            </form>
+          <NavLinks signedIn={Boolean(viewer)} />
+          <div className="ml-auto flex items-center gap-1">
+            <Link href="/browse" aria-label="Search stories" className={btn.icon}>
+              <Search className="h-5 w-5" />
+            </Link>
+            {viewer ? (
+              <AccountMenu viewer={viewer} />
+            ) : (
+              <>
+                <span className="hidden sm:block">
+                  <Link href="/login" className={btn.ghost}>
+                    Sign in
+                  </Link>
+                </span>
+                <Link href="/login?mode=signup" className={`${btn.primary} h-9 px-4`}>
+                  <span className="sm:hidden">Join</span>
+                  <span className="hidden sm:inline">Create account</span>
+                </Link>
+              </>
+            )}
           </div>
-        ) : (
-          <Link
-            href="/login"
-            className="shrink-0 rounded-md bg-accent-strong px-3 py-1.5 text-sm font-medium whitespace-nowrap text-white hover:bg-accent"
-          >
-            Sign in
-          </Link>
-        )}
-      </nav>
-    </header>
+        </nav>
+      </header>
+    </>
   );
+}
+
+/** Phone tab bar; placed after the page content so its spacer sits at the end of the page. */
+export async function SiteTabBar() {
+  const viewer = await getViewer();
+  return <TabBar signedIn={Boolean(viewer)} />;
 }

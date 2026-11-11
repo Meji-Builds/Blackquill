@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BrowseView } from "@/components/browse/BrowseView";
+import { BackLink } from "@/components/ui/BackLink";
 import { canonicalHref, parseFilters } from "@/lib/browse/params";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,9 +31,9 @@ export default async function GenrePage({ params, searchParams }: Props) {
   if (clean) redirect(clean);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <Link href="/browse" className="text-sm text-muted hover:text-foreground">← All stories</Link>
-      <h1 className="mt-2 mb-6 font-serif text-3xl">{g.name}</h1>
+    <div className="mx-auto max-w-6xl px-4 pt-6 pb-12">
+      <BackLink href="/browse">All stories</BackLink>
+      <h1 className="mt-1 mb-6 font-display text-[38px] leading-tight font-semibold">{g.name}</h1>
       <BrowseView path={`/genre/${g.slug}`} filters={filters} locked={{ genre: g.slug }} />
     </div>
   );

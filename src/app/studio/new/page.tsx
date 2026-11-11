@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { StoryForm } from "@/components/studio/StoryForm";
+import { BackLink } from "@/components/ui/BackLink";
 import { createStory } from "../actions";
 import type { Genre } from "@/lib/studio/types";
 
@@ -12,11 +12,9 @@ export default async function NewStoryPage() {
   const { data: genres } = await supabase.from("genres").select("id, slug, name").order("name");
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <Link href="/studio" className="text-sm text-muted hover:text-foreground">
-        ← Studio
-      </Link>
-      <h1 className="mt-2 mb-8 font-serif text-3xl">New story</h1>
+    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12">
+      <BackLink href="/studio">Studio</BackLink>
+      <h1 className="mt-1 mb-8 font-display text-[38px] leading-tight font-semibold">New story</h1>
       <StoryForm action={createStory} genres={(genres ?? []) as Genre[]} submitLabel="Create story" />
     </div>
   );
