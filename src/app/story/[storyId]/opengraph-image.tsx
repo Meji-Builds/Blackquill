@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { ogFonts, publicClient } from "@/lib/seo/site";
+import { withFonts, publicClient } from "@/lib/seo/site";
 
 export const alt = "Story on Obsidian Quill";
 export const size = { width: 1200, height: 630 };
@@ -73,6 +73,6 @@ export default async function Image({ params }: { params: Promise<{ storyId: str
         </div>
       </div>
     ),
-    { ...size, fonts: await ogFonts() },
+    await withFonts(size),
   );
 }

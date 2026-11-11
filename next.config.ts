@@ -3,7 +3,17 @@ import type { NextConfig } from "next";
 const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const internalUrl = process.env.SUPABASE_INTERNAL_URL;
 
+// Share images read these fonts from disk at runtime; list them so they are deployed with those routes.
+const ogFonts = [
+  "./node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff",
+  "./node_modules/@fontsource/inter/files/inter-latin-500-normal.woff",
+];
+
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/opengraph-image": ogFonts,
+    "/story/[storyId]/opengraph-image": ogFonts,
+  },
   experimental: {
     // Covers are up to 2 MB; leave headroom for the rest of the story form.
     serverActions: { bodySizeLimit: "3mb" },
