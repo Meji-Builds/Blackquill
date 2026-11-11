@@ -54,7 +54,7 @@ export default async function StoryPage({ params }: { params: Params }) {
   const [{ data: chapters }, progressRes, shelvesRes] = await Promise.all([
     supabase
       .from("chapters")
-      .select("id, number, title, word_count, published_at")
+      .select("id, number, title, word_count, published_at, choice_points(id)")
       .eq("story_id", story.id)
       .eq("status", "published")
       .order("number"),
@@ -187,6 +187,11 @@ export default async function StoryPage({ params }: { params: Params }) {
                   <span className="w-8 shrink-0 text-right font-mono text-sm text-muted">{c.number}</span>
                   <span className="min-w-0 flex-1 truncate">
                     {c.title || `Chapter ${c.number}`}
+                    {(c.choice_points as unknown as { id: string } | null) && (
+                      <span className="ml-2 rounded-full border border-accent/40 px-2 py-0.5 text-xs text-accent">
+                        Choice
+                      </span>
+                    )}
                     {resume?.id === c.id && <span className="ml-2 text-xs text-accent">You are here</span>}
                   </span>
                   <span className="shrink-0 text-xs text-muted">

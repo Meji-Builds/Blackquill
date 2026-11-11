@@ -28,7 +28,7 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
       supabase.from("genres").select("id, slug, name").order("name"),
       supabase
         .from("chapters")
-        .select("id, story_id, number, title, word_count, status, publish_at, published_at, updated_at")
+        .select("id, story_id, number, title, word_count, status, publish_at, published_at, updated_at, choice_points(id)")
         .eq("story_id", storyId)
         .order("number"),
       supabase.from("story_genres").select("genres(slug)").eq("story_id", storyId),

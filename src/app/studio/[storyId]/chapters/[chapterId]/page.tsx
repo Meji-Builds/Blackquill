@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { ChapterEditor } from "@/components/studio/ChapterEditor";
 import type { ChapterRow } from "@/lib/studio/types";
+import { toChoicePoint } from "@/lib/choices/types";
 
 type Params = Promise<{ storyId: string; chapterId: string }>;
 
@@ -24,5 +25,18 @@ export default async function ChapterEditorPage({ params }: { params: Params }) 
   const { stories: _omit, ...chapter } = data;
   void _omit;
 
-  return <ChapterEditor chapter={chapter as ChapterRow} storyTitle={story.title} storyStatus={story.status} />;
+  const { data: choiceRow } = await supabase
+    .from("choice_points")
+    .select("id, anchor_position, prompt, choice_options(id, position, label, branch_body)")
+    .eq("chapter_id", chapterId)
+    .maybeSingle();
+
+  return (
+    <ChapterEditor
+      chapter={chapter as ChapterRow}
+      storyTitle={story.title}
+      storyStatus={story.status}
+      choice={toChoicePoint(choiceRow)}
+    />
+  );
 }

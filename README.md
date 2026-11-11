@@ -30,6 +30,20 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
 
+### Build step 7: choice points
+
+- Writers add one choice per chapter from the chapter editor: put the cursor in a paragraph, choose "Add a choice
+  after paragraph N", write the question and 2 or 3 options, each with its own short branch scene. The panel
+  shows exactly where the choice appears and can move it to the cursor. Editing wording keeps existing picks.
+- Readers meet the choice inline. The rest of the chapter appears once they pick (or skip). After picking they
+  read their branch, see what share of readers chose each option, and can read the other paths; then the main
+  story continues. The first pick is the one that counts. Signed-out readers can pick too.
+- Authors can try their own choices without being counted, and see the totals. Chapters with a choice are tagged
+  on the story page and in the studio.
+- A chapter only counts as finished once the reader is past the choice. Picks made offline are kept on the device.
+- Database functions `save_choice_point`, `choice_state` and `pick_choice` (migration
+  `20261114000000_choice_points.sql`); clients cannot write picks directly.
+
 ### Build step 6: installable app and offline reading
 
 - Installable on phones and desktops (web app manifest, Obsidian Quill icons including a maskable one, Apple
@@ -135,7 +149,7 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 4. ~~Search, genre and tag browse pages, home page rows~~
 5. ~~Discovery: reading events, Fresh Shelf logic, Rising and Trending rankings~~
 6. ~~PWA and offline chapter downloads~~
-7. Choice-point builder and inline reader experience, with pick percentages
+7. ~~Choice-point builder and inline reader experience, with pick percentages~~
 8. Comic panel pipeline
 9. Writer analytics dashboard, comments, notifications
 10. Moderation tools, polish, launch prep

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ChapterReader } from "@/components/reader/ChapterReader";
 import { toParagraphs } from "@/lib/reader/text";
 import { COOKIE, parseSettings } from "@/components/reader/settings";
+import { toChoicePoint, type ChoiceState } from "@/lib/choices/types";
+import { ANON_COOKIE } from "@/lib/discovery/viewer";
 
 type Params = Promise<{ storyId: string; number: string }>;
 
@@ -76,6 +78,22 @@ export default async function ChapterPage({ params }: { params: Params }) {
   ]);
 
   const progress = progressRes.data;
+
+  // The chapter's choice point, and what this reader already picked.
+  const { data: choiceRow } = await supabase
+    .from("choice_points")
+    .select("id, anchor_position, prompt, choice_options(id, position, label, branch_body)")
+    .eq("chapter_id", chapter.id)
+    .maybeSingle();
+  const choice = toChoicePoint(choiceRow);
+  let choiceState: ChoiceState | null = null;
+  if (choice) {
+    const { data } = await supabase.rpc("choice_state", {
+      p_point_id: choice.id,
+      p_anon: user ? null : ((await cookies()).get(ANON_COOKIE)?.value ?? null),
+    });
+    choiceState = (data as ChoiceState | null) ?? null;
+  }
   // Settings come from a cookie so the first paint already uses the reader's colours and font.
   const settingsCookie = (await cookies()).get(COOKIE)?.value;
   let settingsRaw: string | null = null;
@@ -98,6 +116,8 @@ export default async function ChapterPage({ params }: { params: Params }) {
       nextNumber={next?.number ?? null}
       signedIn={Boolean(user)}
       initialSettings={parseSettings(settingsRaw)}
+      choice={choice}
+      choiceState={choiceState}
       hasSettingsCookie={Boolean(settingsRaw)}
       initialScroll={progress && progress.chapter_id === chapter.id ? progress.scroll_position : 0}
     />

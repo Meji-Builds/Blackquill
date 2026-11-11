@@ -35,3 +35,11 @@ export async function recordFreshImpressions(storyIds: string[]) {
   const { data } = await supabase.rpc("record_fresh_impressions", { p_story_ids: ids, p_anon: await anonId() });
   return (data as number) ?? 0;
 }
+
+/** Records a reader's pick for a choice point and returns their pick with the totals. */
+export async function pickChoice(optionId: string) {
+  if (!UUID.test(optionId)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("pick_choice", { p_option_id: optionId, p_anon: await anonId() });
+  return error ? null : (data as import("@/lib/choices/types").ChoiceState);
+}

@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { publishChapter, saveChapterDraft, scheduleChapter, unpublishChapter } from "@/app/studio/actions";
 import { countWords } from "@/lib/studio/text";
+import { paragraphIndexAt, toParagraphs } from "@/lib/reader/text";
+import type { ChoicePoint } from "@/lib/choices/types";
+import { ChoicePointEditor } from "./ChoicePointEditor";
 import type { ChapterRow } from "@/lib/studio/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -52,10 +55,12 @@ export function ChapterEditor({
   chapter,
   storyTitle,
   storyStatus,
+  choice,
 }: {
   chapter: ChapterRow;
   storyTitle: string;
   storyStatus: string;
+  choice: ChoicePoint | null;
 }) {
   const [title, setTitle] = useState(chapter.title);
   const [body, setBody] = useState(chapter.body);
@@ -69,6 +74,10 @@ export function ChapterEditor({
   const [publishMsg, setPublishMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [restore, setRestore] = useState<{ title: string; body: string } | null>(null);
   const [publishing, startPublish] = useTransition();
+  // Paragraph the cursor is in, for placing a choice point.
+  const [cursorParagraph, setCursorParagraph] = useState<number | null>(null); // null until the writer clicks in
+  const trackCursor = (e: React.SyntheticEvent<HTMLTextAreaElement>) =>
+    setCursorParagraph(paragraphIndexAt(e.currentTarget.value, e.currentTarget.selectionStart));
 
   // Refs carry the latest values into timers and event handlers without re-subscribing.
   const latest = useRef({ title, body });
@@ -279,7 +288,13 @@ export function ChapterEditor({
         />
         <textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value);
+            trackCursor(e);
+          }}
+          onSelect={trackCursor}
+          onClick={trackCursor}
+          onKeyUp={trackCursor}
           placeholder="Begin writing. Leave a blank line between paragraphs."
           aria-label="Chapter text"
           spellCheck
@@ -342,6 +357,14 @@ export function ChapterEditor({
               <p className={`mt-3 text-sm ${publishMsg.ok ? "text-emerald-300" : "text-danger"}`}>{publishMsg.text}</p>
             )}
           </section>
+        )}
+        {!focus && (
+          <ChoicePointEditor
+            chapterId={chapter.id}
+            initial={choice}
+            paragraphs={toParagraphs(body)}
+            cursorParagraph={cursorParagraph}
+          />
         )}
       </div>
     </div>

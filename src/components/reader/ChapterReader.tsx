@@ -7,6 +7,8 @@ import { logReadingEvent } from "@/app/discovery/actions";
 import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
+import { ChoiceBlock } from "./ChoiceBlock";
+import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
 import {
   FONTS,
   WIDTHS,
@@ -46,6 +48,8 @@ export function ChapterReader(props: {
   initialScroll: number;
   initialSettings: ReaderSettings;
   hasSettingsCookie: boolean;
+  choice: ChoicePoint | null;
+  choiceState: ChoiceState | null;
 }) {
   const { storyId, chapterId, signedIn } = props;
   const [settings, setSettings] = useState<ReaderSettings>(props.initialSettings);
@@ -56,6 +60,10 @@ export function ChapterReader(props: {
   // records where the reader actually was, not the next page's layout.
   const ratio = useRef(props.initialScroll);
   const articleRef = useRef<HTMLElement>(null);
+  // With a choice point, the text after it stays hidden until the reader picks or skips.
+  const [choiceResolved, setChoiceResolved] = useState(!props.choice || Boolean(props.choiceState?.picked));
+  const gated = useRef(!choiceResolved);
+  gated.current = !choiceResolved;
   const restored = useRef(false);
 
   // The device's saved settings win over the ones the page was rendered with. They differ for readers who saved
@@ -130,6 +138,7 @@ export function ChapterReader(props: {
     const tryFinish = () => {
       // "Reached the end" means the last lines of the chapter text are on screen.
       const end = articleRef.current?.getBoundingClientRect().bottom ?? Infinity;
+      if (gated.current) return; // the end of the visible text is not the end of the chapter yet
       if (finished || inFlight || end > window.innerHeight + 40 || Date.now() - openedAt < needMs) return;
       inFlight = true;
       logReadingEvent(storyId, chapterId, "finish")
@@ -161,6 +170,10 @@ export function ChapterReader(props: {
   }, [props.prevNumber, props.nextNumber, storyId]);
 
   const t = palette(settings);
+  // Where the choice sits: after its paragraph, or after the last one if the chapter got shorter.
+  const choiceAt = props.choice
+    ? Math.min(props.choice.anchor, props.paragraphs.length - 1)
+    : props.paragraphs.length - 1;
   const texture = textureImage(settings.texture, t.dark);
 
   const nav = (
@@ -233,13 +246,36 @@ export function ChapterReader(props: {
         <article
           ref={articleRef}
           className="mt-10 space-y-[1em]"
-          style={{ fontFamily: FONTS[settings.font].stack, fontSize: settings.size, lineHeight: settings.lineHeight }}
+          style={
+            {
+              fontFamily: FONTS[settings.font].stack,
+              fontSize: settings.size,
+              lineHeight: settings.lineHeight,
+              "--reader-size": `${settings.size}px`,
+              "--reader-lh": settings.lineHeight,
+            } as React.CSSProperties
+          }
         >
-          {props.paragraphs.map((p, i) => (
+          {props.paragraphs.slice(0, choiceAt + 1).map((p, i) => (
             <p key={i} data-p={i} className="whitespace-pre-line">
               {p}
             </p>
           ))}
+          {props.choice && (
+            <ChoiceBlock
+              choice={props.choice}
+              initial={props.choiceState}
+              palette={t}
+              font={FONTS[settings.font].stack}
+              onResolved={() => setChoiceResolved(true)}
+            />
+          )}
+          {choiceResolved &&
+            props.paragraphs.slice(choiceAt + 1).map((p, i) => (
+              <p key={choiceAt + 1 + i} data-p={choiceAt + 1 + i} className="whitespace-pre-line">
+                {p}
+              </p>
+            ))}
         </article>
 
         <div className="mt-14 border-t pt-6" style={{ borderColor: t.border }}>

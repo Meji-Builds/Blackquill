@@ -6,7 +6,7 @@ import { createChapter, deleteChapter, reorderChapters } from "@/app/studio/acti
 import { StatusBadge } from "./StatusBadge";
 import type { ChapterRow } from "@/lib/studio/types";
 
-type Item = Omit<ChapterRow, "body">;
+type Item = Omit<ChapterRow, "body"> & { choice_points?: { id: string } | null };
 
 function when(c: Item) {
   if (c.status === "scheduled" && c.publish_at) return `Publishes ${new Date(c.publish_at).toLocaleString()}`;
@@ -82,6 +82,11 @@ export function ChapterList({ storyId, chapters }: { storyId: string; chapters: 
                   {c.word_count.toLocaleString()} words · {when(c)}
                 </span>
               </Link>
+              {c.choice_points && (
+                <span className="hidden rounded-full border border-accent/40 px-2 py-0.5 text-xs text-accent sm:inline">
+                  Choice
+                </span>
+              )}
               <StatusBadge status={c.status} />
               <div className="flex shrink-0 gap-1">
                 <button

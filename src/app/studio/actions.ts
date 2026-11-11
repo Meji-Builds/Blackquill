@@ -301,3 +301,35 @@ export async function deleteChapter(chapterId: string): Promise<ActionResult> {
   revalidatePath(`/studio/${ch.story_id}`);
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Choice points
+// ---------------------------------------------------------------------------
+
+export async function saveChoicePoint(
+  chapterId: string,
+  choice: { anchor: number; prompt: string; options: { label: string; branch: string }[] },
+): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const ch = await chapterStory(supabase, chapterId);
+  if (!ch) return fail("Chapter not found.");
+  const { error } = await supabase.rpc("save_choice_point", {
+    p_chapter_id: chapterId,
+    p_anchor: Math.max(0, Math.floor(choice.anchor)),
+    p_prompt: choice.prompt,
+    p_options: choice.options.map((o) => ({ label: o.label, branch: o.branch })),
+  });
+  if (error) return fail(error.message.charAt(0).toUpperCase() + error.message.slice(1) + ".");
+  revalidatePath(`/studio/${ch.story_id}`);
+  return { ok: true, message: "Choice saved." };
+}
+
+export async function deleteChoicePoint(chapterId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  const ch = await chapterStory(supabase, chapterId);
+  if (!ch) return fail("Chapter not found.");
+  const { error } = await supabase.from("choice_points").delete().eq("chapter_id", chapterId);
+  if (error) return fail(error.message);
+  revalidatePath(`/studio/${ch.story_id}`);
+  return { ok: true, message: "Choice removed." };
+}
