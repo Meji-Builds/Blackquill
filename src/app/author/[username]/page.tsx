@@ -21,11 +21,18 @@ async function load(username: string) {
   return profile ? { supabase, profile } : null;
 }
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
   const l = await load((await params).username);
   if (!l) return { title: "Author not found" };
   const name = l.profile.display_name || l.profile.username;
-  return { title: name, description: l.profile.bio?.slice(0, 160) || `Stories by ${name} on Obsidian Quill.` };
+  return {
+    title: name,
+    description: l.profile.bio?.slice(0, 160) || `${name} on Obsidian Quill.`,
+  };
 }
 
 export default async function AuthorPage({ params }: { params: Params }) {
@@ -37,7 +44,9 @@ export default async function AuthorPage({ params }: { params: Params }) {
   const [{ data: stories }, { data: me }] = await Promise.all([
     supabase
       .from("stories")
-      .select("id, title, cover_url, status, word_count, last_chapter_at, chapters(count)")
+      .select(
+        "id, title, cover_url, status, word_count, last_chapter_at, chapters(count)",
+      )
       .eq("author_id", profile.id)
       .neq("status", "draft")
       .not("last_chapter_at", "is", null)
@@ -54,10 +63,17 @@ export default async function AuthorPage({ params }: { params: Params }) {
   }[];
   const totalWords = list.reduce((a, s) => a + s.word_count, 0);
   const isMe = me.user?.id === profile.id;
+  const { data: writer } = await supabase.rpc("is_writer", { uid: profile.id });
+  const isWriter = Boolean(writer);
   const [{ data: counts }, { data: follow }] = await Promise.all([
     supabase.rpc("follower_counts", { p_author_id: profile.id }),
     me.user && !isMe
-      ? supabase.from("follows").select("id").eq("user_id", me.user.id).eq("author_id", profile.id).maybeSingle()
+      ? supabase
+          .from("follows")
+          .select("id")
+          .eq("user_id", me.user.id)
+          .eq("author_id", profile.id)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const followers = (counts as { author: number } | null)?.author ?? 0;
@@ -65,63 +81,113 @@ export default async function AuthorPage({ params }: { params: Params }) {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-12 sm:pt-10">
       <section className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
-        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(143,107,255,0.22),transparent_50%)]" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(143,107,255,0.22),transparent_50%)]"
+        />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
           <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-strong to-[#5b3fd6] font-display text-4xl font-semibold text-white ring-4 ring-background">
             {name.charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold tracking-[0.2em] text-gold uppercase">Author</p>
-            <h1 className="font-display text-[38px] leading-tight font-semibold">{name}</h1>
-            <p className="text-sm text-muted">@{profile.username}</p>
+            <p className="text-xs font-semibold tracking-[0.2em] text-gold uppercase">
+              {isWriter ? "Author" : "Reader"}
+            </p>
+            <h1 className="font-display text-[38px] leading-tight font-semibold [overflow-wrap:anywhere]">
+              {name}
+            </h1>
+            {profile.display_name && (
+              <p className="text-sm text-muted">@{profile.username}</p>
+            )}
           </div>
           {isMe ? (
             <Link href="/settings" className={btn.small}>
               <Settings className="h-4 w-4" /> Edit profile
             </Link>
           ) : (
-            <FollowButton
-              authorId={profile.id}
-              initial={Boolean(follow)}
-              signedIn={Boolean(me.user)}
-              loginHref={`/login?next=/author/${profile.username}`}
-              className="self-start sm:self-center"
-            />
+            isWriter && (
+              <FollowButton
+                authorId={profile.id}
+                initial={Boolean(follow)}
+                signedIn={Boolean(me.user)}
+                loginHref={`/login?next=/author/${profile.username}`}
+                className="self-start sm:self-center"
+              />
+            )
           )}
         </div>
-        {profile.bio && <p className="relative mt-5 max-w-2xl font-serif text-[17px] leading-relaxed text-foreground/90">{profile.bio}</p>}
+        {profile.bio && (
+          <p className="relative mt-5 max-w-2xl font-serif text-[17px] leading-relaxed text-foreground/90">
+            {profile.bio}
+          </p>
+        )}
         <div className="relative mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
-          <span className="inline-flex items-center gap-1.5">
-            <BookOpen className="h-4 w-4" /> {list.length} {list.length === 1 ? "story" : "stories"}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <PenLine className="h-4 w-4" /> {formatWords(totalWords)} published
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Users className="h-4 w-4" /> {followers.toLocaleString()} {followers === 1 ? "follower" : "followers"}
-          </span>
+          {isWriter && (
+            <>
+              <span className="inline-flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4" /> {list.length}{" "}
+                {list.length === 1 ? "story" : "stories"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <PenLine className="h-4 w-4" /> {formatWords(totalWords)}{" "}
+                published
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Users className="h-4 w-4" /> {followers.toLocaleString()}{" "}
+                {followers === 1 ? "follower" : "followers"}
+              </span>
+            </>
+          )}
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays className="h-4 w-4" /> Joined{" "}
-            {new Date(profile.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+            {new Date(profile.created_at).toLocaleDateString(undefined, {
+              month: "long",
+              year: "numeric",
+            })}
           </span>
         </div>
       </section>
 
-      <h2 className="mt-10 font-display text-[28px] leading-tight font-semibold">Stories</h2>
-      {list.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-8 text-center text-muted">
-          {isMe ? "Publish a story and it will appear here." : `${name} hasn't published a story yet.`}
-        </p>
+      {!isWriter ? (
+        isMe && (
+          <p className="mt-8 rounded-2xl border border-dashed border-border-strong p-8 text-center text-muted">
+            This is your reader profile. Want to write?{" "}
+            <Link
+              href="/studio/new"
+              className="font-medium text-foreground underline"
+            >
+              Start your first story
+            </Link>{" "}
+            and you can choose a pen name for it.
+          </p>
+        )
       ) : (
-        <ul className="mt-4 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5 lg:grid-cols-6">
-          {list.map((s) => (
-            <li key={s.id}>
-              <StoryCard
-                story={{ ...s, author_name: name, chapter_count: s.chapters[0]?.count }}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          <h2 className="mt-10 font-display text-[28px] leading-tight font-semibold">
+            Stories
+          </h2>
+          {list.length === 0 ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-border-strong p-8 text-center text-muted">
+              {isMe
+                ? "Publish a story and it will appear here."
+                : `${name} hasn't published a story yet.`}
+            </p>
+          ) : (
+            <ul className="mt-4 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5 lg:grid-cols-6">
+              {list.map((s) => (
+                <li key={s.id}>
+                  <StoryCard
+                    story={{
+                      ...s,
+                      author_name: name,
+                      chapter_count: s.chapters[0]?.count,
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
       {me.user && !isMe && (
         <div className="mt-12 flex justify-center">

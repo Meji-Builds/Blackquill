@@ -18,11 +18,19 @@ export async function updateProfile(_prev: ActionResult | null, form: FormData):
     return { ok: false, error: "Usernames are 3 to 30 characters: lowercase letters, numbers and underscores." };
   if (bio.length > 1000) return { ok: false, error: "Your bio can be at most 1,000 characters." };
 
+  // Only writers have pen names; for readers the field isn't shown and nothing is changed.
+  const hasPenNameField = form.has("penName");
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: penName || null, username, bio: bio || null, show_mature: showMature })
+    .update({
+      ...(hasPenNameField ? { display_name: penName || null } : {}),
+      username,
+      bio: bio || null,
+      show_mature: showMature,
+    })
     .eq("id", user.id);
   if (error) {
+    if (/pen names are for writers/.test(error.message)) return { ok: false, error: "Pen names are for writers. Start a story first." };
     if (error.code === "23505") return { ok: false, error: `@${username} is taken. Try another username.` };
     return { ok: false, error: error.message };
   }

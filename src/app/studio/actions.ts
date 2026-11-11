@@ -103,6 +103,10 @@ export async function createStory(_prev: ActionResult | null, form: FormData): P
   const classErr = await saveClassification(supabase, story.id, input);
   if (classErr) return fail(classErr);
 
+  // A first-time writer may pick a pen name along with their first story.
+  const penName = String(form.get("penName") ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+  if (penName) await supabase.from("profiles").update({ display_name: penName }).eq("id", user.id);
+
   if (input.cover) {
     try {
       const url = await uploadCover(supabase, user.id, story.id, input.cover);

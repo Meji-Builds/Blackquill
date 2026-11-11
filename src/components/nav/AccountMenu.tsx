@@ -42,13 +42,17 @@ export function AccountMenu({ viewer }: { viewer: Viewer }) {
           className="absolute right-0 z-40 mt-2 w-64 rounded-2xl border border-border bg-surface-2 p-2 shadow-2xl shadow-black/60"
         >
           <div className="px-3 pt-2 pb-3">
-            <p className="truncate font-medium">{viewer.penName}</p>
-            <p className="truncate text-sm text-muted">@{viewer.username}</p>
+            <p className="truncate font-medium">{viewer.hasPenName ? viewer.penName : `@${viewer.username}`}</p>
+            {viewer.hasPenName ? (
+              <p className="truncate text-sm text-muted">@{viewer.username}</p>
+            ) : (
+              <p className="truncate text-sm text-muted">{viewer.isWriter ? "Writer" : "Reader"}</p>
+            )}
           </div>
           <div className="h-px bg-border" />
           <div className="py-1">
             <Link role="menuitem" href={`/author/${viewer.username}`} onClick={close} className={item}>
-              <UserRound className="h-4 w-4 text-muted" /> Your author page
+              <UserRound className="h-4 w-4 text-muted" /> {viewer.isWriter ? "Your author page" : "Your profile"}
             </Link>
             <Link role="menuitem" href="/studio" onClick={close} className={item}>
               <Feather className="h-4 w-4 text-muted" /> Writer studio

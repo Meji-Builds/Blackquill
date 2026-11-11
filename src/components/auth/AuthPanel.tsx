@@ -36,7 +36,6 @@ function safeNext(next: string | null) {
 export function AuthPanel({ initialMode, next: rawNext, initialError }: { initialMode: AuthMode; next: string | null; initialError: string | null }) {
   const next = safeNext(rawNext);
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [penName, setPenName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<"form" | "google" | null>(null);
@@ -88,7 +87,6 @@ export function AuthPanel({ initialMode, next: rawNext, initialError }: { initia
           password,
           options: {
             emailRedirectTo: callback(next),
-            data: penName.trim() ? { full_name: penName.trim() } : undefined,
           },
         });
         if (error) return setProblem(friendlyAuthError(error.message));
@@ -245,22 +243,6 @@ export function AuthPanel({ initialMode, next: rawNext, initialError }: { initia
       )}
 
       <form onSubmit={submit} className={`space-y-4 ${mode === "forgot" ? "mt-7" : ""}`} noValidate={false}>
-        {mode === "signup" && (
-          <div>
-            <label htmlFor="pen-name" className={label}>
-              Pen name <span className="font-normal text-muted">(optional)</span>
-            </label>
-            <input
-              id="pen-name"
-              value={penName}
-              onChange={(e) => setPenName(e.target.value)}
-              maxLength={60}
-              autoComplete="nickname"
-              placeholder="How your name appears on your stories"
-              className={input}
-            />
-          </div>
-        )}
         <div>
           <label htmlFor="email" className={label}>
             Email

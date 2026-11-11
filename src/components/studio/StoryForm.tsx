@@ -17,6 +17,7 @@ export function StoryForm({
   selectedGenres = [],
   tags = [],
   submitLabel,
+  penName,
 }: {
   action: Action;
   genres: Genre[];
@@ -24,6 +25,8 @@ export function StoryForm({
   selectedGenres?: string[];
   tags?: string[];
   submitLabel: string;
+  /** On a writer's first story: offer a pen name (the username is the default). */
+  penName?: { username: string };
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [picked, setPicked] = useState<string[]>(selectedGenres);
@@ -40,6 +43,18 @@ export function StoryForm({
 
   return (
     <form action={formAction} className="grid gap-8 md:grid-cols-[180px_1fr]">
+      {penName && (
+        <div className="rounded-xl border border-accent/30 md:col-span-2 bg-accent/[0.06] p-4">
+          <label className="block text-sm">
+            Your pen name <span className="text-muted">(optional)</span>
+            <input name="penName" maxLength={60} placeholder={penName.username} className={`${input} mt-1`} />
+          </label>
+          <p className="mt-1.5 text-xs text-muted">
+            Your first story! Choose the name readers will see on your stories, or leave it empty to write as @{penName.username}.
+            You can change it later in settings.
+          </p>
+        </div>
+      )}
       <div>
         <Cover url={preview ?? story?.cover_url ?? null} title={story?.title ?? "Your cover"} className="w-full" />
         <label className="mt-3 block text-sm">

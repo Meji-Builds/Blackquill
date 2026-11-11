@@ -16,6 +16,8 @@ export default async function SettingsPage() {
     .eq("id", user.id)
     .single();
   if (!profile) return null;
+  const { count: stories } = await supabase.from("stories").select("id", { count: "exact", head: true }).eq("author_id", user.id);
+  const isWriter = (stories ?? 0) > 0;
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-6 pb-12 sm:pt-10">
@@ -25,19 +27,22 @@ export default async function SettingsPage() {
           <h1 className="mt-1 font-display text-[38px] leading-tight font-semibold">Profile and settings</h1>
         </div>
         <Link href={`/author/${profile.username}`} className={btn.small}>
-          <ExternalLink className="h-4 w-4" /> View your author page
+          <ExternalLink className="h-4 w-4" /> {isWriter ? "View your author page" : "View your profile"}
         </Link>
       </div>
 
       <section className={`${card} mt-8 p-5 sm:p-6`}>
         <h2 className="font-display text-2xl font-semibold">Profile</h2>
-        <p className="mt-1 text-sm text-muted">How readers see you on your stories and author page.</p>
+        <p className="mt-1 text-sm text-muted">
+          {isWriter ? "How readers see you on your stories and author page." : "How others see you in comments and on your profile."}
+        </p>
         <ProfileForm
           initial={{
             penName: profile.display_name ?? "",
             username: profile.username,
             bio: profile.bio ?? "",
             showMature: profile.show_mature,
+            isWriter,
           }}
         />
       </section>

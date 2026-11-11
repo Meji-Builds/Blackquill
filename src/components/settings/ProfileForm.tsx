@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { AtSign, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { updateProfile, usernameAvailable } from "@/app/settings/actions";
@@ -10,6 +11,7 @@ interface Initial {
   username: string;
   bio: string;
   showMature: boolean;
+  isWriter: boolean;
 }
 
 export function ProfileForm({ initial }: { initial: Initial }) {
@@ -28,7 +30,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
     return () => clearTimeout(t);
   }, [username, initial.username]);
 
-  const preview = penName.trim() || username;
+  const preview = (initial.isWriter && penName.trim()) || username;
 
   return (
     <form action={action} className="mt-6 space-y-5">
@@ -37,26 +39,38 @@ export function ProfileForm({ initial }: { initial: Initial }) {
           {preview.charAt(0).toUpperCase()}
         </span>
         <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-semibold">{preview}</p>
-          <p className="truncate text-sm text-muted">@{username || "username"}</p>
+          <p className="truncate font-serif text-lg font-semibold">{initial.isWriter && penName.trim() ? preview : `@${username || "username"}`}</p>
+          <p className="truncate text-sm text-muted">
+            {initial.isWriter && penName.trim() ? `@${username || "username"}` : initial.isWriter ? "Writer" : "Reader"}
+          </p>
         </div>
       </div>
 
-      <div>
-        <label htmlFor="penName" className={label}>
-          Pen name
-        </label>
-        <input
-          id="penName"
-          name="penName"
-          value={penName}
-          onChange={(e) => setPenName(e.target.value)}
-          maxLength={60}
-          placeholder={initial.username}
-          className={input}
-        />
-        <p className="mt-1.5 text-xs text-muted">Shown on your stories. Leave empty to use your username.</p>
-      </div>
+      {initial.isWriter ? (
+        <div>
+          <label htmlFor="penName" className={label}>
+            Pen name
+          </label>
+          <input
+            id="penName"
+            name="penName"
+            value={penName}
+            onChange={(e) => setPenName(e.target.value)}
+            maxLength={60}
+            placeholder={initial.username}
+            className={input}
+          />
+          <p className="mt-1.5 text-xs text-muted">Shown on your stories and author page. Leave empty to use your username.</p>
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-border-strong px-4 py-3 text-sm text-muted">
+          Readers are known by their username. Writing something? Start a story in the{" "}
+          <Link href="/studio/new" className="font-medium text-foreground underline">
+            studio
+          </Link>{" "}
+          and you can choose a pen name for it.
+        </p>
+      )}
 
       <div>
         <label htmlFor="username" className={label}>

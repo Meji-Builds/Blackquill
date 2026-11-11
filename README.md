@@ -69,6 +69,12 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
 
+### Accounts: readers and writers
+
+Everyone signs up with just an email (or Google) and gets a username; readers are known by it. Pen names are for
+writers: the first time someone starts a story they can choose one (or keep writing under their username), and
+change it later in settings. The database refuses a pen name on an account with no stories.
+
 ### Build step 10: moderation, polish, launch prep
 
 - Report button on stories, author pages and comments (reason + optional details; one open report per person per
