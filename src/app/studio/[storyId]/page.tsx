@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/studio/StatusBadge";
 import { BackLink } from "@/components/ui/BackLink";
 import { btn } from "@/components/ui/styles";
 import { BarChart3, Eye } from "lucide-react";
+import { RemovedNotice } from "@/components/community/RemovedNotice";
 import { updateStory } from "../actions";
 import type { ChapterRow, Genre, StoryRow } from "@/lib/studio/types";
 
@@ -78,6 +79,11 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
         {s.word_count.toLocaleString()} published {s.word_count === 1 ? "word" : "words"}
       </p>
 
+      {(story as { removed_at?: string | null }).removed_at && (
+        <div className="mt-4">
+          <RemovedNotice reason={(story as { removed_reason?: string | null }).removed_reason ?? null} />
+        </div>
+      )}
       {s.status === "draft" && (
         <StoryActions storyId={s.id} mode="publish" publishedChapters={published} />
       )}

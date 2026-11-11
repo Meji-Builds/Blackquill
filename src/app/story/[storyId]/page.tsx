@@ -9,6 +9,10 @@ import { Expandable } from "@/components/reader/Expandable";
 import { ChapterIndex } from "@/components/reader/ChapterIndex";
 import { FollowButton } from "@/components/community/FollowButton";
 import { ReportButton } from "@/components/community/ReportButton";
+import { MatureGate } from "@/components/community/MatureGate";
+import { needsMatureGate } from "@/lib/moderation/mature";
+import { getViewer } from "@/components/SiteHeader";
+import { RemovedNotice } from "@/components/community/RemovedNotice";
 import { btn } from "@/components/ui/styles";
 import { BookOpen, BookmarkPlus, CalendarDays, Clock, ListOrdered } from "lucide-react";
 import { readingMinutes } from "@/lib/reader/text";
@@ -23,7 +27,7 @@ async function loadStory(storyId: string) {
   const { data } = await supabase
     .from("stories")
     .select(
-      "id, title, synopsis, cover_url, status, rating, word_count, last_chapter_at, author_id, profiles!stories_author_id_fkey(username, display_name), story_genres(genres(slug, name)), story_tags(tags(slug, name))",
+      "id, title, synopsis, cover_url, status, rating, removed_at, removed_reason, word_count, last_chapter_at, author_id, profiles!stories_author_id_fkey(username, display_name), story_genres(genres(slug, name)), story_tags(tags(slug, name))",
     )
     .eq("id", storyId)
     .neq("status", "draft")
@@ -35,7 +39,21 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { storyId } = await params;
   const loaded = await loadStory(storyId);
   if (!loaded) return { title: "Story not found" };
-  return { title: loaded.story.title, description: loaded.story.synopsis.slice(0, 160) };
+  const { story } = loaded;
+  const author = story.profiles as unknown as { username: string; display_name: string | null } | null;
+  const description = story.rating === "mature" ? "A mature story on Obsidian Quill." : story.synopsis.slice(0, 160);
+  return {
+    title: story.title,
+    description,
+    alternates: { canonical: `/story/${story.id}` },
+    robots: story.rating === "mature" || story.removed_at ? { index: false } : undefined,
+    openGraph: {
+      type: "book",
+      title: story.title,
+      description,
+      authors: author ? [author.display_name || author.username] : undefined,
+    },
+  };
 }
 
 export default async function StoryPage({ params }: { params: Params }) {
@@ -55,6 +73,10 @@ export default async function StoryPage({ params }: { params: Params }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const viewer = await getViewer();
+  if (await needsMatureGate(story, user && viewer ? { id: user.id, showMature: viewer.showMature } : null)) {
+    return <MatureGate title={story.title} signedIn={Boolean(user)} />;
+  }
 
   const [{ data: chapters }, progressRes, shelvesRes, followRes, countsRes] = await Promise.all([
     supabase
@@ -106,6 +128,7 @@ export default async function StoryPage({ params }: { params: Params }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-6 pb-12 sm:pt-10">
+      {story.removed_at && <RemovedNotice reason={story.removed_reason} />}
       <div className="grid grid-cols-[112px_1fr] gap-x-5 gap-y-6 sm:grid-cols-[220px_1fr] sm:gap-x-10">
         <Cover url={story.cover_url} title={story.title} author={authorName} className="w-full self-start sm:row-span-2" />
 
@@ -241,3 +264,4 @@ function Stats({
     </>
   );
 }
+

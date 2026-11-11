@@ -7,6 +7,9 @@ import { toParagraphs } from "@/lib/reader/text";
 import { COOKIE, parseSettings } from "@/components/reader/settings";
 import { toChoicePoint, type ChoiceState } from "@/lib/choices/types";
 import { ANON_COOKIE } from "@/lib/discovery/viewer";
+import { MatureGate } from "@/components/community/MatureGate";
+import { needsMatureGate } from "@/lib/moderation/mature";
+import { getViewer } from "@/components/SiteHeader";
 
 type Params = Promise<{ storyId: string; number: string }>;
 
@@ -17,7 +20,7 @@ async function load(storyId: string, numberParam: string) {
   if (!UUID.test(storyId) || !Number.isInteger(number) || number < 1) return null;
   const supabase = await createClient();
   const [{ data: story }, { data: chapter }] = await Promise.all([
-    supabase.from("stories").select("id, title, status").eq("id", storyId).neq("status", "draft").maybeSingle(),
+    supabase.from("stories").select("id, title, status, rating, author_id").eq("id", storyId).neq("status", "draft").maybeSingle(),
     supabase
       .from("chapters")
       .select("id, number, title, body, word_count")
@@ -46,6 +49,10 @@ export default async function ChapterPage({ params }: { params: Params }) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const viewer = await getViewer();
+  if (await needsMatureGate(story, user && viewer ? { id: user.id, showMature: viewer.showMature } : null)) {
+    return <MatureGate title={story.title} signedIn={Boolean(user)} />;
+  }
 
   // Neighbours by number among published chapters (numbers can skip over drafts).
   const [{ data: prev }, { data: next }, progressRes] = await Promise.all([

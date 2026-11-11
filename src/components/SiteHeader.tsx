@@ -16,6 +16,7 @@ export interface Viewer {
   penName: string;
   isAdmin: boolean;
   unread: number;
+  showMature: boolean;
 }
 
 /** The signed-in reader, looked up once per request however many components ask. */
@@ -27,7 +28,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   } = await supabase.auth.getUser();
   if (!user) return null;
   const [{ data }, { count }] = await Promise.all([
-    supabase.from("profiles").select("username, display_name, is_admin").eq("id", user.id).single(),
+    supabase.from("profiles").select("username, display_name, is_admin, show_mature").eq("id", user.id).single(),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
   ]);
   if (!data) return null;
@@ -36,6 +37,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     penName: data.display_name || data.username,
     isAdmin: data.is_admin,
     unread: count ?? 0,
+    showMature: data.show_mature,
   };
 });
 

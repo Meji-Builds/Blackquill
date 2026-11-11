@@ -19,6 +19,31 @@ Vercel.
    publish on time.
 6. `npm install && npm run dev`, then open http://localhost:3000. `npm test` runs the unit tests.
 
+## Deploying (Vercel + Supabase)
+
+1. **Supabase.** In Database > Extensions, enable `pg_cron` and `pg_trgm`. Then run every file in
+   `supabase/migrations/` in the SQL editor, oldest first (or `supabase link` and `supabase db push`). Migrations are
+   only ever added, never edited after release, so run the new ones whenever you update.
+2. **Auth.** Authentication > URL configuration: set the Site URL to your production address and add
+   `https://YOUR-DOMAIN/auth/callback` to Redirect URLs. Enable the Google provider if you want Google sign-in.
+3. **Vercel.** Import the repository and set these environment variables, then deploy:
+
+   | Variable | Value |
+   | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Project URL (Settings > API) |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon public key (Settings > API) |
+   | `NEXT_PUBLIC_SITE_URL` | Your production address, e.g. `https://obsidianquill.vercel.app` (used for links, the sitemap and share cards) |
+   | `OPENAI_API_KEY` | Optional. Without it, comic panels use the built-in demo artwork and cost nothing |
+   | `OPENAI_IMAGE_MODEL` | Optional, defaults to `gpt-image-1` |
+
+4. **Make yourself an admin.** Sign up on the live site, then in the SQL editor run
+   `update public.profiles set is_admin = true where username = 'your_username';`. The account menu then shows
+   Moderation (`/admin`): the report queue, takedowns and the stories featured for comic panels.
+5. **Check:** `/robots.txt`, `/sitemap.xml` and a story's share card (`/story/<id>/opengraph-image`) should load.
+
+Built-in limits (all enforced in the database): 10 comments per person per 5 minutes, 20 reports a day, 10 new
+stories a day, 30 published chapters an hour, comic generations capped per chapter and at 60 per writer per day.
+
 ## Demo content (optional)
 
 `supabase/seed/` holds 30 demo books (12 demo authors, 834 chapters across all 15 genres), three choice points and
@@ -43,6 +68,31 @@ To open the local app from a phone or a preview link, set `NEXT_PUBLIC_SUPABASE_
 Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
+
+### Build step 10: moderation, polish, launch prep
+
+- Report button on stories, author pages and comments (reason + optional details; one open report per person per
+  item). Admins work through `/admin`: grouped by item, with dismiss, hide comment, take story down (with a note
+  the writer sees) and restore.
+- A taken-down story disappears from every list, page and chapter for everyone but its writer, who sees why. Only
+  admins can change takedowns or hide comments; the database refuses it for anyone else.
+- Admins choose which stories are featured for comic panels and their per-chapter limit.
+- Mature stories stay out of lists unless the reader turns on "Show mature stories" in settings, and opening one
+  shows an 18+ notice first (remembered on the device once confirmed).
+- Rate limits on comments, reports, new stories, publishing and comic generation.
+- Sitemap, robots.txt, share cards for the site and every story (cover-style image with title, author and blurb),
+  canonical links; private pages are kept out of search engines.
+
+### Build step 9: community and analytics
+
+- Comments on chapters and on single paragraphs (tap a paragraph; paragraphs with comments show a count), with one
+  level of replies, editing, deleting and an Author badge for the writer.
+- Follow a story (new chapter alerts) or an author (alerts for all their stories); follower counts are public.
+- Notifications: new chapters from followed stories and authors, replies, comments on your stories and new
+  followers. The header bell shows the unread count.
+- Writer analytics per story (Studio > Analytics): readers, chapter completion, returning readers, library adds,
+  followers and comments over 7, 30 or 90 days; readers per day; readers and finishers per chapter with the biggest
+  drop-off called out; Fresh Shelf and ranking status.
 
 ### Build step 8: comic panels
 
@@ -179,5 +229,5 @@ Supabase at `/sb`, so only the app's port needs to be reachable.
 6. ~~PWA and offline chapter downloads~~
 7. ~~Choice-point builder and inline reader experience, with pick percentages~~
 8. ~~Comic panel pipeline~~
-9. Writer analytics dashboard, comments, notifications
-10. Moderation tools, polish, launch prep
+9. ~~Writer analytics dashboard, comments, notifications~~
+10. ~~Moderation tools, polish, launch prep~~

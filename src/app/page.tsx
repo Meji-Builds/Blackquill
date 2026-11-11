@@ -85,6 +85,9 @@ export default async function Home() {
   const storyCols =
     "id, title, cover_url, status, rating, word_count, last_chapter_at, profiles!stories_author_id_fkey(username, display_name)";
 
+  const mature = user
+    ? Boolean((await supabase.from("profiles").select("show_mature").eq("id", user.id).maybeSingle()).data?.show_mature)
+    : false;
   const [continueRes, freshRes, updatedRes, genreRes, trendingRes, risingRes] = await Promise.all([
     user
       ? supabase
@@ -97,17 +100,18 @@ export default async function Home() {
     supabase.rpc("fresh_shelf_stories", {
       p_anon: user ? null : ((await cookies()).get(ANON_COOKIE)?.value ?? null),
       p_limit: ROW,
+      p_include_mature: mature,
     }),
-    supabase.rpc("search_stories", { p_sort: "updated", p_limit: ROW }),
+    supabase.rpc("search_stories", { p_sort: "updated", p_limit: ROW, p_include_mature: mature }),
     supabase.rpc("genre_counts"),
-    supabase.rpc("ranked_stories", { p_list: "trending", p_limit: ROW }),
-    supabase.rpc("ranked_stories", { p_list: "rising", p_limit: ROW }),
+    supabase.rpc("ranked_stories", { p_list: "trending", p_limit: ROW, p_include_mature: mature }),
+    supabase.rpc("ranked_stories", { p_list: "rising", p_limit: ROW, p_include_mature: mature }),
   ]);
 
   const genres = ((genreRes.data ?? []) as { slug: string; name: string; stories: number }[]).filter((g) => g.stories > 0);
   const topGenres = genres.slice(0, 4);
   const genreRows = await Promise.all(
-    topGenres.map((g) => supabase.rpc("search_stories", { p_genres: [g.slug], p_sort: "updated", p_limit: ROW })),
+    topGenres.map((g) => supabase.rpc("search_stories", { p_genres: [g.slug], p_sort: "updated", p_limit: ROW, p_include_mature: mature })),
   );
 
   const continueItems = ((continueRes.data ?? []) as unknown as {

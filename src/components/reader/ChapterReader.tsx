@@ -33,8 +33,16 @@ import "@fontsource/opendyslexic/400.css";
 
 const SAVE_EVERY_MS = 3000;
 
-function scrollRatio() {
-  const max = document.documentElement.scrollHeight - window.innerHeight;
+/** How far down the chapter the reader is: 1 once the end of the chapter text is on screen (comments below don't count). */
+function scrollMax(end: HTMLElement | null) {
+  const docMax = document.documentElement.scrollHeight - window.innerHeight;
+  if (!end) return docMax;
+  const endAt = end.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+  return Math.max(0, Math.min(docMax, endAt));
+}
+
+function scrollRatio(end: HTMLElement | null) {
+  const max = scrollMax(end);
   return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1;
 }
 
@@ -66,6 +74,7 @@ export function ChapterReader(props: {
   // records where the reader actually was, not the next page's layout.
   const ratio = useRef(props.initialScroll);
   const articleRef = useRef<HTMLElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"text" | "comic">("text");
   const comicRef = useRef<HTMLOListElement>(null);
   const viewRef = useRef(view);
@@ -116,10 +125,11 @@ export function ChapterReader(props: {
     const target = props.initialScroll;
     requestAnimationFrame(() => {
       if (target > 0.01 && target < 0.99) {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const max = scrollMax(endRef.current);
         window.scrollTo({ top: target * max });
       }
-      ratio.current = target;
+      // Measure rather than assume: the reader may already have scrolled while the page was starting up.
+      ratio.current = target > 0.01 && target < 0.99 ? target : scrollRatio(endRef.current);
       lastSaved.current = target > 0 ? target : null;
       // Opening a chapter records it as the current one even before scrolling.
       if (target === 0) persist();
@@ -128,12 +138,12 @@ export function ChapterReader(props: {
 
   useEffect(() => {
     const onScroll = () => {
-      ratio.current = scrollRatio();
+      ratio.current = scrollRatio(endRef.current);
       setProgress(ratio.current);
     };
     const timer = setInterval(persist, SAVE_EVERY_MS);
     const onHide = () => document.visibilityState === "hidden" && persist();
-    setProgress(scrollRatio());
+    setProgress(scrollRatio(endRef.current));
     window.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("visibilitychange", onHide);
     return () => {
@@ -378,6 +388,7 @@ export function ChapterReader(props: {
             props.paragraphs.slice(choiceAt + 1).map((p, i) => paragraph(p, choiceAt + 1 + i))}
         </article>
 
+        <div ref={endRef} aria-hidden="true" />
         <div className="mt-14 border-t pt-6" style={{ borderColor: t.border }}>
           {!props.nextNumber && (
             <div className="mb-8 rounded-2xl border px-5 py-5 text-center" style={{ borderColor: t.border }}>

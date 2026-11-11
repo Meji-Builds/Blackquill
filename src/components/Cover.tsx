@@ -71,7 +71,7 @@ export function Cover({
         <span aria-hidden="true" className="mb-[6cqw] h-px w-[30%]" style={{ background: `${glow}aa` }} />
         <span
           className="line-clamp-4 font-display leading-[1.02] font-semibold [overflow-wrap:anywhere]"
-          style={{ fontSize: "clamp(9px, 13.5cqw, 34px)" }}
+          style={{ fontSize: "clamp(6px, 13.5cqw, 34px)" }}
         >
           {title}
         </span>
