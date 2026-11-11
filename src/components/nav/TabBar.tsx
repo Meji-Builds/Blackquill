@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { BookOpen, Compass, Feather, Home, UserRound } from "lucide-react";
 
 // Screens where every pixel belongs to the text: the chapter reader, the chapter editor and sign-in.
-const HIDDEN = [/^\/story\/[^/]+\/chapter\//, /^\/studio\/[^/]+\/chapters\//, /^\/login/, /^\/auth\//];
+const HIDDEN = [/^\/story\/[^/]+\/chapter\//, /^\/studio\/[^/]+\/chapters\//, /^\/login/, /^\/auth\//, /^\/translate\/[^/]+\/[^/]+\/\d+/];
 
 /** Phone navigation along the bottom edge, like a reading app. Hidden from tablet width up. */
 export function TabBar({ signedIn }: { signedIn: boolean }) {
@@ -21,7 +21,7 @@ export function TabBar({ signedIn }: { signedIn: boolean }) {
       href: signedIn ? "/settings" : "/login",
       label: signedIn ? "Me" : "Sign in",
       icon: UserRound,
-      match: (p: string) => /^\/(settings|author)/.test(p),
+      match: (p: string) => /^\/(settings|author|translate|notifications)/.test(p),
     },
   ];
 

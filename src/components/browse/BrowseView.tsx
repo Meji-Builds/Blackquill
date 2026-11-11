@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LANGUAGES, languageLabel } from "@/lib/translation/languages";
 import { createClient } from "@/lib/supabase/server";
 import { StoryCard } from "./StoryCard";
 import { btn } from "@/components/ui/styles";
@@ -47,6 +48,7 @@ export async function BrowseView({
     ...filters.tags
       .filter((t) => t !== locked?.tag)
       .map((t) => ({ label: `#${t}`, href: filtersHref(path, filters, { tags: filters.tags.filter((x) => x !== t) }) })),
+    ...(filters.lang ? [{ label: `In ${languageLabel(filters.lang)}`, href: filtersHref(path, filters, { lang: null }) }] : []),
   ];
 
   return (
@@ -69,7 +71,7 @@ export async function BrowseView({
           />
           <button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent-strong px-5 text-sm font-medium text-white shadow-[0_8px_24px_-12px_rgba(143,107,255,0.8)] transition hover:bg-[#9c7dff] disabled:opacity-50"><span className="sr-only sm:not-sr-only">Search</span><Search className="h-4 w-4 sm:hidden" /></button>
         </div>
-        <details className="group" open={(filters.genres.filter((g) => g !== locked?.genre).length + (filters.status ? 1 : 0) + (filters.length ? 1 : 0) + (filters.updated ? 1 : 0) + (filters.mature ? 1 : 0)) > 0}>
+        <details className="group" open={(filters.genres.filter((g) => g !== locked?.genre).length + (filters.status ? 1 : 0) + (filters.length ? 1 : 0) + (filters.updated ? 1 : 0) + (filters.mature ? 1 : 0) + (filters.lang ? 1 : 0)) > 0}>
           <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-1 text-sm font-medium text-muted hover:text-foreground [&::-webkit-details-marker]:hidden">
             <SlidersHorizontal className="h-4 w-4" /> Filters and sort
             <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
@@ -105,6 +107,12 @@ export async function BrowseView({
             <option value="">Updated any time</option>
             {Object.entries(UPDATED).map(([v, l]) => (
               <option key={v} value={v}>Updated: {l}</option>
+            ))}
+          </select>
+          <select name="lang" defaultValue={filters.lang ?? ""} aria-label="Language" className={field}>
+            <option value="">Any language</option>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>In {languageLabel(l.code)}</option>
             ))}
           </select>
           <select name="sort" defaultValue={filters.sort} aria-label="Sort" className={field}>

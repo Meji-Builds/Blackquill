@@ -34,6 +34,9 @@ export interface StoryRow {
   updated_at: string;
   last_chapter_at: string | null;
   word_count: number;
+  language: string;
+  allow_machine_translation: boolean;
+  allow_community_translation: boolean;
 }
 
 export interface ChapterRow {

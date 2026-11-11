@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import type { ActionResult, Genre, StoryRow } from "@/lib/studio/types";
 import { MAX_GENRES, RATINGS, STORY_STATUSES } from "@/lib/studio/types";
 import { Cover } from "@/components/Cover";
+import { LANGUAGES, languageLabel } from "@/lib/translation/languages";
 
 type Action = (prev: ActionResult | null, form: FormData) => Promise<ActionResult>;
 
@@ -21,7 +22,10 @@ export function StoryForm({
 }: {
   action: Action;
   genres: Genre[];
-  story?: Pick<StoryRow, "title" | "synopsis" | "rating" | "status" | "cover_url">;
+  story?: Pick<
+    StoryRow,
+    "title" | "synopsis" | "rating" | "status" | "cover_url" | "language" | "allow_machine_translation" | "allow_community_translation"
+  >;
   selectedGenres?: string[];
   tags?: string[];
   submitLabel: string;
@@ -156,6 +160,34 @@ export function StoryForm({
             </select>
           </label>
         </div>
+
+        <fieldset className="rounded-xl border border-border p-4">
+          <legend className="px-1 text-sm font-medium">Language and translations</legend>
+          <label className="block text-sm">
+            Written in
+            <select name="language" defaultValue={story?.language ?? "en"} className={`${input} mt-1`}>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {languageLabel(l.code)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="mt-4 flex items-start gap-3 text-sm">
+            <input type="checkbox" name="allowMachine" defaultChecked={story?.allow_machine_translation ?? true} className="mt-0.5 h-4 w-4 accent-[#8f6bff]" />
+            <span>
+              Let readers machine-translate it
+              <span className="block text-xs text-muted">Readers anywhere can read it in their own language, translated automatically and clearly labelled.</span>
+            </span>
+          </label>
+          <label className="mt-3 flex items-start gap-3 text-sm">
+            <input type="checkbox" name="allowCommunity" defaultChecked={story?.allow_community_translation ?? true} className="mt-0.5 h-4 w-4 accent-[#8f6bff]" />
+            <span>
+              Accept volunteer translators
+              <span className="block text-xs text-muted">Translators can ask to translate it, and you approve each one. Their translations are shown before machine ones.</span>
+            </span>
+          </label>
+        </fieldset>
 
         <div className="flex items-center gap-4">
           <button

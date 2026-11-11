@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { isLanguage } from "@/lib/translation/languages";
 import type { ActionResult, ContentRating, StoryStatus } from "@/lib/studio/types";
 import { MAX_COVER_BYTES, MAX_GENRES, MAX_TAGS, RATINGS, STORY_STATUSES } from "@/lib/studio/types";
 import { parseTags, slugify } from "@/lib/studio/text";
@@ -21,6 +22,9 @@ interface StoryInput {
   tags: string[];
   cover: File | null;
   removeCover: boolean;
+  language: string;
+  allowMachine: boolean;
+  allowCommunity: boolean;
 }
 
 function readStoryForm(form: FormData): StoryInput | string {
@@ -45,7 +49,21 @@ function readStoryForm(form: FormData): StoryInput | string {
     if (!["image/jpeg", "image/png", "image/webp"].includes(cover.type)) return "Covers must be JPG, PNG or WebP.";
     if (cover.size > MAX_COVER_BYTES) return "Covers must be 2 MB or smaller.";
   }
-  return { title, synopsis, rating, status, genres, tags, cover, removeCover: form.get("removeCover") === "on" };
+  const language = String(form.get("language") ?? "en");
+  if (!isLanguage(language)) return "Pick the language the story is written in.";
+  return {
+    title,
+    synopsis,
+    rating,
+    status,
+    genres,
+    tags,
+    cover,
+    removeCover: form.get("removeCover") === "on",
+    language,
+    allowMachine: form.get("allowMachine") === "on",
+    allowCommunity: form.get("allowCommunity") === "on",
+  };
 }
 
 async function uniqueSlug(supabase: Supabase, authorId: string, title: string, exceptId?: string) {
@@ -95,6 +113,9 @@ export async function createStory(_prev: ActionResult | null, form: FormData): P
       synopsis: input.synopsis,
       rating: input.rating,
       status: input.status,
+      language: input.language,
+      allow_machine_translation: input.allowMachine,
+      allow_community_translation: input.allowCommunity,
     })
     .select("id")
     .single();
@@ -155,6 +176,9 @@ export async function updateStory(storyId: string, _prev: ActionResult | null, f
       rating: input.rating,
       status: input.status,
       cover_url,
+      language: input.language,
+      allow_machine_translation: input.allowMachine,
+      allow_community_translation: input.allowCommunity,
     })
     .eq("id", storyId);
   if (error) return fail(error.message);

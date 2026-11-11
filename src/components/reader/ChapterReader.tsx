@@ -8,9 +8,15 @@ import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import { ChoiceBlock } from "./ChoiceBlock";
-import { AlignLeft, ChevronLeft, ChevronRight, Images, List, MessageCircle, Type } from "lucide-react";
+import { AlignLeft, ChevronLeft, ChevronRight, Images, Languages, List, Loader2, MessageCircle, Sparkles, Type, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LanguagePanel } from "./LanguagePanel";
+import { machineTranslate, setReadingLanguage } from "@/app/translation/actions";
+import { language, languageLabel } from "@/lib/translation/languages";
+import type { ReaderLanguages, ShownTranslation } from "@/lib/translation/resolve";
 import { ChapterComments, ParagraphSheet, useComments } from "@/components/community/Comments";
 import { FollowButton } from "@/components/community/FollowButton";
+import { ShareButton } from "@/components/community/ShareButton";
 import { paragraphCounts } from "@/lib/community/types";
 import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
 import {
@@ -64,10 +70,44 @@ export function ChapterReader(props: {
   choiceState: ChoiceState | null;
   panels: { id: string; caption: string; image_url: string }[];
   following: boolean;
+  languages: ReaderLanguages;
+  shown: ShownTranslation | null;
 }) {
   const { storyId, chapterId, signedIn } = props;
   const [settings, setSettings] = useState<ReaderSettings>(props.initialSettings);
   const [panel, setPanel] = useState(false);
+  const [langPanel, setLangPanel] = useState(false);
+  const router = useRouter();
+  // The words on screen: the original or a translation. A machine translation not made yet is fetched after load.
+  const [text, setText] = useState({ title: props.title, paragraphs: props.paragraphs });
+  const [shown, setShown] = useState<ShownTranslation | null>(props.shown);
+  const [translateError, setTranslateError] = useState<string | null>(null);
+  const [switching, setSwitching] = useState(false);
+  const pendingLang = shown?.kind === "pending" ? shown.language : null;
+  const translate = useCallback(() => {
+    if (!pendingLang) return;
+    setTranslateError(null);
+    machineTranslate(chapterId, pendingLang)
+      .then((r) => {
+        if (r.ok && r.text) {
+          setText(r.text);
+          setShown({ kind: "machine", language: pendingLang });
+        } else setTranslateError(r.ok ? "The translation didn't work." : r.error);
+      })
+      .catch(() => setTranslateError("You seem to be offline. Showing the original."));
+  }, [chapterId, pendingLang]);
+  useEffect(() => {
+    translate();
+  }, [translate]);
+
+  async function pickLanguage(lang: string | null) {
+    setLangPanel(false);
+    setSwitching(true);
+    await setReadingLanguage(storyId, lang).catch(() => {});
+    // Drop any ?lang= from a shared link so the new choice applies.
+    router.replace(`/story/${storyId}/chapter/${props.number}`);
+    router.refresh();
+  }
   const [progress, setProgress] = useState(0);
   const lastSaved = useRef<number | null>(null);
   // Last measured position; saving reads this instead of measuring, so a save during navigation
@@ -84,6 +124,11 @@ export function ChapterReader(props: {
   const gated = useRef(!choiceResolved);
   gated.current = !choiceResolved;
   const restored = useRef(false);
+  useEffect(() => {
+    setText({ title: props.title, paragraphs: props.paragraphs });
+    setShown(props.shown);
+    setSwitching(false);
+  }, [props.title, props.paragraphs, props.shown]);
   const comments = useComments(chapterId);
   const counts = paragraphCounts(comments.comments);
   // The paragraph the reader tapped (shows its comment button) and the one whose discussion is open.
@@ -201,8 +246,8 @@ export function ChapterReader(props: {
   const t = palette(settings);
   // Where the choice sits: after its paragraph, or after the last one if the chapter got shorter.
   const choiceAt = props.choice
-    ? Math.min(props.choice.anchor, props.paragraphs.length - 1)
-    : props.paragraphs.length - 1;
+    ? Math.min(props.choice.anchor, text.paragraphs.length - 1)
+    : text.paragraphs.length - 1;
   const texture = textureImage(settings.texture, t.dark);
 
   // Tapping a paragraph (without selecting text) offers to comment on it; paragraphs with comments show a count.
@@ -303,22 +348,48 @@ export function ChapterReader(props: {
               <span className="block text-base" style={{ color: t.muted }}>
                 Chapter {props.number}
               </span>
-              {props.title}
+              {text.title}
             </h1>
             <p className="mt-1 text-xs" style={{ color: t.muted }}>
               {props.wordCount.toLocaleString()} words · about {readingMinutes(props.wordCount)} min
             </p>
           </div>
-          <button
-            onClick={() => setPanel((p) => !p)}
-            aria-expanded={panel}
-            aria-label="Reading settings"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium"
-            style={{ borderColor: t.border }}
-          >
-            <Type className="h-4 w-4" /> Aa
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={() => setLangPanel((p) => !p)}
+              aria-expanded={langPanel}
+              aria-label={`Reading language: ${languageLabel(props.languages.chosen ?? props.languages.original)}`}
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium uppercase"
+              style={{ borderColor: t.border }}
+            >
+              {switching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+              {(props.languages.chosen ?? props.languages.original).split("-")[0]}
+            </button>
+            <button
+              onClick={() => setPanel((p) => !p)}
+              aria-expanded={panel}
+              aria-label="Reading settings"
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium"
+              style={{ borderColor: t.border }}
+            >
+              <Type className="h-4 w-4" /> Aa
+            </button>
+          </div>
         </div>
+        {shown && (
+          <TranslationNote
+            shown={shown}
+            original={props.languages.original}
+            error={translateError}
+            onRetry={translate}
+            onOriginal={() => pickLanguage(null)}
+            muted={t.muted}
+            border={t.border}
+          />
+        )}
+        {langPanel && (
+          <LanguagePanel languages={props.languages} storyId={storyId} onPick={pickLanguage} onClose={() => setLangPanel(false)} />
+        )}
         {panel && <ReaderSettingsPanel settings={settings} onChange={update} onClose={() => setPanel(false)} />}
 
         {props.panels.length > 0 && (
@@ -363,6 +434,8 @@ export function ChapterReader(props: {
         <article
           hidden={view === "comic"}
           ref={articleRef}
+          lang={shown && shown.kind !== "pending" && shown.kind !== "missing" ? shown.language : props.languages.original}
+          dir={language(shown && shown.kind !== "pending" && shown.kind !== "missing" ? shown.language : props.languages.original)?.rtl ? "rtl" : "ltr"}
           className="mt-10 space-y-[1em]"
           style={
             {
@@ -374,7 +447,7 @@ export function ChapterReader(props: {
             } as React.CSSProperties
           }
         >
-          {props.paragraphs.slice(0, choiceAt + 1).map((p, i) => paragraph(p, i))}
+          {text.paragraphs.slice(0, choiceAt + 1).map((p, i) => paragraph(p, i))}
           {props.choice && (
             <ChoiceBlock
               choice={props.choice}
@@ -385,7 +458,7 @@ export function ChapterReader(props: {
             />
           )}
           {choiceResolved &&
-            props.paragraphs.slice(choiceAt + 1).map((p, i) => paragraph(p, choiceAt + 1 + i))}
+            text.paragraphs.slice(choiceAt + 1).map((p, i) => paragraph(p, choiceAt + 1 + i))}
         </article>
 
         <div ref={endRef} aria-hidden="true" />
@@ -400,6 +473,15 @@ export function ChapterReader(props: {
             </div>
           )}
           {nav}
+          <div className="mt-6 flex justify-center">
+            <ShareButton
+              path={`/story/${storyId}/chapter/${props.number}`}
+              title={`${props.storyTitle} · Chapter ${props.number}`}
+              text={props.title}
+              className="inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium"
+              style={{ borderColor: t.border, color: t.muted }}
+            />
+          </div>
           {!signedIn && (
             <p className="mt-6 text-center text-sm" style={{ color: t.muted }}>
               <Link href={`/login?next=/story/${storyId}/chapter/${props.number}`} className="underline">
@@ -426,11 +508,100 @@ export function ChapterReader(props: {
             loginHref={loginHref}
             t={t}
             index={sheet}
-            excerpt={props.paragraphs[sheet] ?? ""}
+            excerpt={text.paragraphs[sheet] ?? ""}
             onClose={closeSheet}
           />
         )}
       </div>
     </div>
+  );
+}
+
+/** What the reader is looking at when it isn't the original: who translated it, or why it's the original. */
+function TranslationNote({
+  shown,
+  original,
+  error,
+  onRetry,
+  onOriginal,
+  muted,
+  border,
+}: {
+  shown: ShownTranslation;
+  original: string;
+  error: string | null;
+  onRetry: () => void;
+  onOriginal: () => void;
+  muted: string;
+  border: string;
+}) {
+  const target = language(shown.language)?.native ?? shown.language;
+  const from = language(original)?.name ?? original;
+  const link = "font-medium underline underline-offset-2";
+  let body: React.ReactNode;
+  if (shown.kind === "community") {
+    body = (
+      <>
+        <Users className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Translated from {from} by{" "}
+          {shown.translatorUsername ? (
+            <Link href={`/author/${shown.translatorUsername}`} className={link}>
+              {shown.translator}
+            </Link>
+          ) : (
+            "a volunteer"
+          )}
+          .{shown.stale && " The writer has edited this chapter since, so small details may differ."}{" "}
+          <button onClick={onOriginal} className={link}>
+            Show original
+          </button>
+        </span>
+      </>
+    );
+  } else if (shown.kind === "machine") {
+    body = (
+      <>
+        <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Machine-translated from {from} into {target}; it may miss nuance.{" "}
+          <button onClick={onOriginal} className={link}>
+            Show original
+          </button>
+        </span>
+      </>
+    );
+  } else if (shown.kind === "pending") {
+    body = error ? (
+      <span>
+        {error}{" "}
+        <button onClick={onRetry} className={link}>
+          Try again
+        </button>{" "}
+        ·{" "}
+        <button onClick={onOriginal} className={link}>
+          Read the original
+        </button>
+      </span>
+    ) : (
+      <>
+        <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+        <span role="status">Translating this chapter into {target}… The original is shown until it&apos;s ready.</span>
+      </>
+    );
+  } else {
+    body = (
+      <span>
+        This chapter isn&apos;t translated into {target} yet, so you&apos;re reading the {from} original.{" "}
+        <button onClick={onOriginal} className={link}>
+          Always show the original
+        </button>
+      </span>
+    );
+  }
+  return (
+    <p className="mt-5 flex gap-2 rounded-xl border px-3.5 py-2.5 text-sm" style={{ borderColor: border, color: muted }}>
+      {body}
+    </p>
   );
 }

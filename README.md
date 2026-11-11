@@ -35,6 +35,8 @@ Vercel.
    | `NEXT_PUBLIC_SITE_URL` | Your production address, e.g. `https://obsidianquill.vercel.app` (used for links, the sitemap and share cards) |
    | `OPENAI_API_KEY` | Optional. Without it, comic panels use the built-in demo artwork and cost nothing |
    | `OPENAI_IMAGE_MODEL` | Optional, defaults to `gpt-image-1` |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Needed for machine translation (Settings > API, "service_role"). Server-only: never expose it to the browser |
+   | `DEEPL_API_KEY` or `ANTHROPIC_API_KEY` | Optional machine translation service. With none set (or no service key), readers can still read volunteer translations, but machine translation is hidden. `OPENAI_API_KEY` also works. `TRANSLATION_PROVIDER` (deepl, anthropic, openai) picks one when several are set |
 
 4. **Make yourself an admin.** Sign up on the live site, then in the SQL editor run
    `update public.profiles set is_admin = true where username = 'your_username';`. The account menu then shows
@@ -68,6 +70,25 @@ To open the local app from a phone or a preview link, set `NEXT_PUBLIC_SUPABASE_
 Supabase at `/sb`, so only the app's port needs to be reachable.
 
 ## What is in place
+
+### Translations and translators
+
+- Every story has an original language (Story details), and two per-book switches: let readers machine-translate
+  it, and accept volunteer translators. Both are on by default.
+- Readers tap the language button in the chapter reader to read in another language. The choice is remembered
+  per story. Volunteer translations come first and credit the translator; otherwise a machine translation is made
+  on demand, cached for every later reader, and clearly labelled. "Show original" is always one tap away. Links
+  with `?lang=fr` open a story in that language.
+- Machine translations are only ever written by the server, so nobody can plant text for other readers, and are
+  limited to 40 chapters a day per account (10 per device when signed out). They are redone when the writer edits
+  the chapter.
+- Anyone can volunteer: set the languages you translate in the Translation desk (`/translate`), then tap
+  **Help translate** on a story. Writers approve requests (or invite translators by username, or from the
+  directory at `/translators`) in the story's studio page. Approved translators get a side-by-side editor with
+  autosave, an optional machine draft to start from, and publish per chapter. Everyone is notified at each step.
+- Browse can filter by language: stories written in it, or translated into it by volunteers.
+- Share buttons on stories, chapters and author pages use the phone's share sheet, or offer copy-link and the main
+  networks; every link unfurls into the story's share card.
 
 ### Accounts: readers and writers
 

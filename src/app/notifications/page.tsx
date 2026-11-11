@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BellOff, BookOpen, MessageCircle, Reply, UserPlus } from "lucide-react";
+import { languageLabel } from "@/lib/translation/languages";
+import { Languages, BellOff, BookOpen, MessageCircle, Reply, UserPlus } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { timeAgo } from "@/lib/community/types";
 import { MarkRead } from "@/components/community/MarkRead";
@@ -9,7 +10,8 @@ export const metadata: Metadata = { title: "Notifications" };
 
 interface Row {
   id: string;
-  kind: "new_chapter" | "comment_reply" | "story_comment" | "new_follower";
+  kind: "new_chapter" | "comment_reply" | "story_comment" | "new_follower" | "translator_request" | "translator_invite" | "translator_approved" | "translator_declined";
+  language: string | null;
   read_at: string | null;
   created_at: string;
   story_id: string | null;
@@ -23,6 +25,7 @@ function describe(n: Row) {
   const who = n.actor ? n.actor.display_name || n.actor.username : "Someone";
   const story = n.stories?.title ?? "a story";
   const chapter = n.chapters ? `Chapter ${n.chapters.number}${n.chapters.title ? `: ${n.chapters.title}` : ""}` : "";
+  const lang = n.language ? languageLabel(n.language) : "another language";
   const chapterHref = n.stories && n.chapters ? `/story/${n.stories.id}/chapter/${n.chapters.number}` : n.stories ? `/story/${n.stories.id}` : "/";
   switch (n.kind) {
     case "new_chapter":
@@ -31,6 +34,22 @@ function describe(n: Row) {
       return { icon: Reply, href: `${chapterHref}#comments`, text: <><b>{who}</b> replied to your comment on <b>{story}</b></> };
     case "story_comment":
       return { icon: MessageCircle, href: `${chapterHref}#comments`, text: <><b>{who}</b> commented on {chapter || "a chapter"} of <b>{story}</b></> };
+    case "translator_request":
+      return {
+        icon: Languages,
+        href: n.stories ? `/studio/${n.stories.id}#translations` : "/studio",
+        text: <><b>{who}</b> offered to translate <b>{story}</b> into {lang}</>,
+      };
+    case "translator_invite":
+      return { icon: Languages, href: "/translate", text: <><b>{who}</b> invited you to translate <b>{story}</b> into {lang}</> };
+    case "translator_approved":
+      return {
+        icon: Languages,
+        href: n.stories && n.language ? `/translate/${n.stories.id}/${n.language}` : "/translate",
+        text: <><b>{who}</b> said yes: <b>{story}</b> can be translated into {lang}</>,
+      };
+    case "translator_declined":
+      return { icon: Languages, href: "/translate", text: <><b>{who}</b> declined translating <b>{story}</b> into {lang}</> };
     case "new_follower":
       return {
         icon: UserPlus,
@@ -45,7 +64,7 @@ export default async function NotificationsPage() {
   const { data } = await supabase
     .from("notifications")
     .select(
-      "id, kind, read_at, created_at, story_id, actor:profiles!notifications_actor_id_fkey(username, display_name), stories(id, title), chapters(number, title), comments(body)",
+      "id, kind, read_at, created_at, story_id, language, actor:profiles!notifications_actor_id_fkey(username, display_name), stories(id, title), chapters(number, title), comments(body)",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })

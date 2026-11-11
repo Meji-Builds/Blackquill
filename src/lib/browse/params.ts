@@ -1,4 +1,5 @@
 // Turns browse URL parameters into search_stories() arguments, and back into links.
+import { isLanguage } from "../translation/languages.ts";
 
 export const PAGE_SIZE = 24;
 
@@ -37,6 +38,8 @@ export interface BrowseFilters {
   updated: keyof typeof UPDATED | null;
   sort: Sort;
   mature: boolean;
+  /** Written in, or translated by volunteers into, this language. */
+  lang: string | null;
   page: number;
 }
 
@@ -66,6 +69,7 @@ export function parseFilters(raw: RawParams): BrowseFilters {
     updated: updated in UPDATED ? (updated as BrowseFilters["updated"]) : null,
     sort: sort in SORTS ? (sort as Sort) : q ? "relevance" : "updated",
     mature: one(raw.mature) === "1",
+    lang: isLanguage(one(raw.lang)) ? one(raw.lang) : null,
     page: Number.isFinite(page) && page > 0 ? Math.min(page, 500) : 1,
   };
 }
@@ -82,6 +86,7 @@ export function toRpcArgs(f: BrowseFilters) {
     p_updated_within_days: f.updated ? Number(f.updated) : null,
     p_include_mature: f.mature,
     p_sort: f.sort,
+    p_language: f.lang,
     p_limit: PAGE_SIZE,
     p_offset: (f.page - 1) * PAGE_SIZE,
   };
@@ -99,6 +104,7 @@ export function filtersHref(path: string, f: BrowseFilters, patch: Partial<Brows
   if (n.updated) p.set("updated", n.updated);
   if (n.sort !== (n.q ? "relevance" : "updated")) p.set("sort", n.sort);
   if (n.mature) p.set("mature", "1");
+  if (n.lang) p.set("lang", n.lang);
   if (n.page > 1) p.set("page", String(n.page));
   const s = p.toString();
   return s ? `${path}?${s}` : path;

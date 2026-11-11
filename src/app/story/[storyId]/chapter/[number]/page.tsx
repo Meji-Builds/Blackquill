@@ -3,15 +3,16 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChapterReader } from "@/components/reader/ChapterReader";
-import { toParagraphs } from "@/lib/reader/text";
 import { COOKIE, parseSettings } from "@/components/reader/settings";
 import { toChoicePoint, type ChoiceState } from "@/lib/choices/types";
 import { ANON_COOKIE } from "@/lib/discovery/viewer";
+import { chosenLanguage, resolveChapterText } from "@/lib/translation/resolve";
 import { MatureGate } from "@/components/community/MatureGate";
 import { needsMatureGate } from "@/lib/moderation/mature";
 import { getViewer } from "@/components/SiteHeader";
 
 type Params = Promise<{ storyId: string; number: string }>;
+type Search = Promise<{ lang?: string }>;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -20,10 +21,10 @@ async function load(storyId: string, numberParam: string) {
   if (!UUID.test(storyId) || !Number.isInteger(number) || number < 1) return null;
   const supabase = await createClient();
   const [{ data: story }, { data: chapter }] = await Promise.all([
-    supabase.from("stories").select("id, title, status, rating, author_id").eq("id", storyId).neq("status", "draft").maybeSingle(),
+    supabase.from("stories").select("id, title, status, rating, author_id, language, allow_machine_translation, allow_community_translation").eq("id", storyId).neq("status", "draft").maybeSingle(),
     supabase
       .from("chapters")
-      .select("id, number, title, body, word_count")
+      .select("id, number, title, body, word_count, content_hash")
       .eq("story_id", storyId)
       .eq("number", number)
       .eq("status", "published")
@@ -40,8 +41,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return { title: `${l.chapter.title || `Chapter ${l.chapter.number}`} · ${l.story.title}` };
 }
 
-export default async function ChapterPage({ params }: { params: Params }) {
+export default async function ChapterPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { storyId, number } = await params;
+  const { lang: langParam } = await searchParams;
   const l = await load(storyId, number);
   if (!l) notFound();
   const { supabase, story, chapter } = l;
@@ -105,6 +107,17 @@ export default async function ChapterPage({ params }: { params: Params }) {
   const { data: follow } = user
     ? await supabase.from("follows").select("id").eq("user_id", user.id).eq("story_id", storyId).maybeSingle()
     : { data: null };
+  // The language this reader reads the story in, and the chapter text in it.
+  const chosen = await chosenLanguage(story.id, langParam, story.language);
+  const { data: langInfo } = await supabase.rpc("story_languages", { p_story_id: story.id });
+  const info = langInfo as { chapters: number; translations: { language: string; chapters: number; translators: string[] | null }[] } | null;
+  const text = await resolveChapterText(supabase, {
+    chapter,
+    story,
+    chosen,
+    storyTranslations: info?.translations ?? [],
+    totalChapters: info?.chapters ?? 0,
+  });
   let choiceState: ChoiceState | null = null;
   if (choice) {
     const { data } = await supabase.rpc("choice_state", {
@@ -128,8 +141,10 @@ export default async function ChapterPage({ params }: { params: Params }) {
       storyTitle={story.title}
       chapterId={chapter.id}
       number={chapter.number}
-      title={chapter.title}
-      paragraphs={toParagraphs(chapter.body)}
+      title={text.title}
+      paragraphs={text.paragraphs}
+      languages={{ original: story.language, chosen, ...text.languages }}
+      shown={text.shown}
       wordCount={chapter.word_count}
       prevNumber={prev?.number ?? null}
       nextNumber={next?.number ?? null}

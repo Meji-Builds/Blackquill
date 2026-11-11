@@ -9,15 +9,27 @@ import { Expandable } from "@/components/reader/Expandable";
 import { ChapterIndex } from "@/components/reader/ChapterIndex";
 import { FollowButton } from "@/components/community/FollowButton";
 import { ReportButton } from "@/components/community/ReportButton";
+import { ShareButton } from "@/components/community/ShareButton";
+import { HelpTranslate, type MyTranslatorRow } from "@/components/translation/HelpTranslate";
+import { languageLabel } from "@/lib/translation/languages";
+import { machineTranslationReady } from "@/lib/translation/providers";
 import { MatureGate } from "@/components/community/MatureGate";
 import { needsMatureGate } from "@/lib/moderation/mature";
 import { getViewer } from "@/components/SiteHeader";
 import { RemovedNotice } from "@/components/community/RemovedNotice";
 import { btn } from "@/components/ui/styles";
-import { BookOpen, BookmarkPlus, CalendarDays, Clock, ListOrdered } from "lucide-react";
+import { Languages, BookOpen, BookmarkPlus, CalendarDays, Clock, ListOrdered } from "lucide-react";
 import { readingMinutes } from "@/lib/reader/text";
 
 type Params = Promise<{ storyId: string }>;
+
+interface StoryLanguages {
+  original: string;
+  machine: boolean;
+  community: boolean;
+  chapters: number;
+  translations: { language: string; chapters: number; translators: string[] | null }[];
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -78,7 +90,7 @@ export default async function StoryPage({ params }: { params: Params }) {
     return <MatureGate title={story.title} signedIn={Boolean(user)} />;
   }
 
-  const [{ data: chapters }, progressRes, shelvesRes, followRes, countsRes] = await Promise.all([
+  const [{ data: chapters }, progressRes, shelvesRes, followRes, countsRes, langsRes, mineRes, meRes] = await Promise.all([
     supabase
       .from("chapters")
       .select("id, number, title, word_count, published_at, choice_points(id)")
@@ -105,7 +117,14 @@ export default async function StoryPage({ params }: { params: Params }) {
       ? supabase.from("follows").select("id").eq("user_id", user.id).eq("story_id", story.id).maybeSingle()
       : Promise.resolve({ data: null }),
     supabase.rpc("follower_counts", { p_story_id: story.id }),
+    supabase.rpc("story_languages", { p_story_id: story.id }),
+    user
+      ? supabase.from("story_translators").select("language, status").eq("story_id", story.id).eq("user_id", user.id)
+      : Promise.resolve({ data: null }),
+    user ? supabase.from("profiles").select("translator_languages").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
+  const langs = langsRes.data as StoryLanguages | null;
+  const machineReady = machineTranslationReady();
   const followers = ((countsRes.data as { story: number } | null)?.story ?? 0) as number;
   const list = chapters ?? [];
   const resume = progressRes.data ? list.find((c) => c.id === progressRes.data!.chapter_id) : undefined;
@@ -144,6 +163,14 @@ export default async function StoryPage({ params }: { params: Params }) {
               by <span className="font-medium text-foreground">{authorName}</span>
             </Link>
           )}
+          <div className="mt-3">
+            <ShareButton
+              path={`/story/${story.id}`}
+              title={story.title}
+              text={authorName ? `by ${authorName} on Obsidian Quill` : "on Obsidian Quill"}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-strong px-3.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-foreground"
+            />
+          </div>
           <div className="mt-3 hidden flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted sm:flex">
             <Stats story={story} chapters={list.length} />
           </div>
@@ -208,6 +235,47 @@ export default async function StoryPage({ params }: { params: Params }) {
           )}
         </div>
       </div>
+
+      {langs && (langs.translations.length > 0 || (langs.machine && machineReady) || langs.community) && (
+        <section id="translate" aria-labelledby="languages-heading" className="mt-10 scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
+          <h2 id="languages-heading" className="flex items-center gap-2 font-semibold">
+            <Languages className="h-5 w-5 text-accent" /> Languages
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Written in <span className="text-foreground">{languageLabel(langs.original)}</span>.
+            {langs.machine && machineReady && " Readers can also machine-translate any chapter into their own language: tap the language button in the reader."}
+          </p>
+          {langs.translations.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {langs.translations.map((t) => (
+                <li key={t.language}>
+                  <Link
+                    href={`/story/${story.id}/chapter/${list[0]?.number ?? 1}?lang=${t.language}`}
+                    className="inline-flex flex-col rounded-xl border border-border-strong px-3.5 py-2 text-sm hover:bg-surface-2"
+                  >
+                    <span className="font-medium">{languageLabel(t.language)}</span>
+                    <span className="text-xs text-muted">
+                      {t.chapters} of {langs.chapters} chapters{t.translators?.length ? ` · by ${t.translators.join(", ")}` : ""}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {langs.community && user?.id !== story.author_id && (
+            <div className="mt-4">
+              <HelpTranslate
+                storyId={story.id}
+                storyTitle={story.title}
+                original={langs.original}
+                signedIn={Boolean(user)}
+                mine={(mineRes.data ?? []) as MyTranslatorRow[]}
+                myLanguages={(meRes.data as { translator_languages: string[] } | null)?.translator_languages ?? []}
+              />
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="mt-12">
         <ChapterIndex

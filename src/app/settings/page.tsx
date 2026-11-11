@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink, LogOut } from "lucide-react";
+import { ExternalLink, Languages, LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { ChangePassword } from "@/components/settings/ChangePassword";
@@ -45,6 +45,17 @@ export default async function SettingsPage() {
             isWriter,
           }}
         />
+      </section>
+
+      <section className={`${card} mt-6 p-5 sm:p-6`}>
+        <h2 className="font-display text-2xl font-semibold">Translating</h2>
+        <p className="mt-1 text-sm text-muted">
+          Speak more than one language? Volunteer to translate stories for readers who can&apos;t read the original. Set your languages and
+          follow your translations at the translation desk.
+        </p>
+        <Link href="/translate" className={`${btn.small} mt-4`}>
+          <Languages className="h-4 w-4" /> Open the translation desk
+        </Link>
       </section>
 
       <section className={`${card} mt-6 p-5 sm:p-6`}>

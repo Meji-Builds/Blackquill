@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Download, Feather, LogOut, Settings, Shield, UserRound } from "lucide-react";
+import { Languages, BookOpen, Download, Feather, LogOut, Settings, Shield, UserRound } from "lucide-react";
 import type { Viewer } from "@/components/SiteHeader";
 
 /** Avatar button with the reader's own pages and sign out. */
@@ -56,6 +56,9 @@ export function AccountMenu({ viewer }: { viewer: Viewer }) {
             </Link>
             <Link role="menuitem" href="/studio" onClick={close} className={item}>
               <Feather className="h-4 w-4 text-muted" /> Writer studio
+            </Link>
+            <Link role="menuitem" href="/translate" onClick={close} className={item}>
+              <Languages className="h-4 w-4 text-muted" /> Translation desk
             </Link>
             <Link role="menuitem" href="/library" onClick={close} className={item}>
               <BookOpen className="h-4 w-4 text-muted" /> Library

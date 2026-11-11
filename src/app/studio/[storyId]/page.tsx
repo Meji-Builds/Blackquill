@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/studio/StatusBadge";
 import { BackLink } from "@/components/ui/BackLink";
 import { btn } from "@/components/ui/styles";
 import { BarChart3, Eye } from "lucide-react";
+import { StudioTranslations } from "@/components/translation/StudioTranslations";
 import { RemovedNotice } from "@/components/community/RemovedNotice";
 import { updateStory } from "../actions";
 import type { ChapterRow, Genre, StoryRow } from "@/lib/studio/types";
@@ -105,6 +106,12 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
       <section className="mt-10">
         <ChapterList storyId={s.id} chapters={list} />
       </section>
+
+      <StudioTranslations
+        supabase={supabase}
+        story={s}
+        publishedChapterIds={list.filter((c) => c.status === "published").map((c) => c.id)}
+      />
 
       <details className="group mt-12 rounded-lg border border-border bg-surface/50">
         <summary className="cursor-pointer list-none px-5 py-4 font-display text-2xl font-semibold">

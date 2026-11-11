@@ -7,6 +7,8 @@ import { StoryCard, formatWords } from "@/components/browse/StoryCard";
 import { btn } from "@/components/ui/styles";
 import { FollowButton } from "@/components/community/FollowButton";
 import { ReportButton } from "@/components/community/ReportButton";
+import { ShareButton } from "@/components/community/ShareButton";
+import { languageLabel } from "@/lib/translation/languages";
 
 type Params = Promise<{ username: string }>;
 
@@ -15,7 +17,7 @@ async function load(username: string) {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, created_at")
+    .select("id, username, display_name, bio, created_at, translator_languages")
     .eq("username", username)
     .maybeSingle();
   return profile ? { supabase, profile } : null;
@@ -65,6 +67,24 @@ export default async function AuthorPage({ params }: { params: Params }) {
   const isMe = me.user?.id === profile.id;
   const { data: writer } = await supabase.rpc("is_writer", { uid: profile.id });
   const isWriter = Boolean(writer);
+  const translates: string[] = profile.translator_languages ?? [];
+  const { data: translating } = await supabase
+    .from("story_translators")
+    .select("language, stories(id, title, cover_url, status, word_count, profiles!stories_author_id_fkey(username, display_name), chapters(count))")
+    .eq("user_id", profile.id)
+    .eq("status", "approved");
+  const translated = ((translating ?? []) as unknown as {
+    language: string;
+    stories: {
+      id: string;
+      title: string;
+      cover_url: string | null;
+      status: string;
+      word_count: number;
+      profiles: { username: string; display_name: string | null } | null;
+      chapters: { count: number }[];
+    } | null;
+  }[]).filter((t) => t.stories && t.stories.status !== "draft");
   const [{ data: counts }, { data: follow }] = await Promise.all([
     supabase.rpc("follower_counts", { p_author_id: profile.id }),
     me.user && !isMe
@@ -91,7 +111,7 @@ export default async function AuthorPage({ params }: { params: Params }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold tracking-[0.2em] text-gold uppercase">
-              {isWriter ? "Author" : "Reader"}
+              {[isWriter ? "Author" : null, translates.length || translated.length ? "Translator" : null].filter(Boolean).join(" · ") || "Reader"}
             </p>
             <h1 className="font-display text-[38px] leading-tight font-semibold [overflow-wrap:anywhere]">
               {name}
@@ -114,6 +134,9 @@ export default async function AuthorPage({ params }: { params: Params }) {
                 className="self-start sm:self-center"
               />
             )
+          )}
+          {isWriter && (
+            <ShareButton path={`/author/${profile.username}`} title={`${name} on Obsidian Quill`} variant="icon" className="self-start sm:self-center" />
           )}
         </div>
         {profile.bio && (
@@ -188,6 +211,34 @@ export default async function AuthorPage({ params }: { params: Params }) {
             </ul>
           )}
         </>
+      )}
+      {(translates.length > 0 || translated.length > 0) && (
+        <section className="mt-10">
+          <h2 className="font-display text-[28px] leading-tight font-semibold">Translations</h2>
+          {translates.length > 0 && (
+            <p className="mt-1 text-sm text-muted">
+              Translates into {translates.map((l) => languageLabel(l)).join(", ")}.
+            </p>
+          )}
+          {translated.length > 0 ? (
+            <ul className="mt-4 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 md:grid-cols-5 lg:grid-cols-6">
+              {translated.map((t) => (
+                <li key={`${t.stories!.id}:${t.language}`}>
+                  <StoryCard
+                    story={{
+                      ...t.stories!,
+                      author_name: t.stories!.profiles?.display_name || t.stories!.profiles?.username || "",
+                      chapter_count: t.stories!.chapters[0]?.count,
+                    }}
+                  />
+                  <p className="mt-1 text-xs font-medium text-accent">→ {languageLabel(t.language)}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted">{isMe ? "Offer to translate a story from its page and it will show here." : "No translations published yet."}</p>
+          )}
+        </section>
       )}
       {me.user && !isMe && (
         <div className="mt-12 flex justify-center">
