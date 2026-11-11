@@ -68,7 +68,7 @@ export function OfflineButton({
       )}
       {state.kind === "none" && (
         <button onClick={save} className={`${btn.secondary} w-full`}>
-          <Download className="h-4 w-4" /> Download
+          <Download className="h-4 w-4" /> <span className="sm:hidden">Offline</span><span className="hidden sm:inline">Download</span>
         </button>
       )}
       {state.kind === "saving" && (
@@ -79,13 +79,13 @@ export function OfflineButton({
       {state.kind === "saved" &&
         (missing > 0 ? (
           <button onClick={save} className={`${btn.secondary} w-full border-accent/50 text-accent`}>
-            <RefreshCw className="h-4 w-4" /> Update ({missing} new)
+            <RefreshCw className="h-4 w-4" /> Update<span className="hidden sm:inline"> ({missing} new)</span>
           </button>
         ) : (
           <button onClick={remove} title="Saved for offline reading. Tap to remove." className={`${btn.secondary} group w-full text-success`}>
             <CheckCircle2 className="h-4 w-4 group-hover:hidden" />
             <Trash2 className="hidden h-4 w-4 group-hover:block" />
-            <span className="group-hover:hidden">Saved offline</span>
+            <span className="group-hover:hidden">Saved<span className="hidden sm:inline"> offline</span></span>
             <span className="hidden group-hover:inline">Remove</span>
           </button>
         ))}

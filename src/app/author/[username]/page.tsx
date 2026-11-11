@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, CalendarDays, PenLine, Settings } from "lucide-react";
+import { BookOpen, CalendarDays, PenLine, Settings, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { StoryCard, formatWords } from "@/components/browse/StoryCard";
 import { btn } from "@/components/ui/styles";
+import { FollowButton } from "@/components/community/FollowButton";
+import { ReportButton } from "@/components/community/ReportButton";
 
 type Params = Promise<{ username: string }>;
 
@@ -52,6 +54,13 @@ export default async function AuthorPage({ params }: { params: Params }) {
   }[];
   const totalWords = list.reduce((a, s) => a + s.word_count, 0);
   const isMe = me.user?.id === profile.id;
+  const [{ data: counts }, { data: follow }] = await Promise.all([
+    supabase.rpc("follower_counts", { p_author_id: profile.id }),
+    me.user && !isMe
+      ? supabase.from("follows").select("id").eq("user_id", me.user.id).eq("author_id", profile.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const followers = (counts as { author: number } | null)?.author ?? 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-12 sm:pt-10">
@@ -66,10 +75,18 @@ export default async function AuthorPage({ params }: { params: Params }) {
             <h1 className="font-display text-[38px] leading-tight font-semibold">{name}</h1>
             <p className="text-sm text-muted">@{profile.username}</p>
           </div>
-          {isMe && (
+          {isMe ? (
             <Link href="/settings" className={btn.small}>
               <Settings className="h-4 w-4" /> Edit profile
             </Link>
+          ) : (
+            <FollowButton
+              authorId={profile.id}
+              initial={Boolean(follow)}
+              signedIn={Boolean(me.user)}
+              loginHref={`/login?next=/author/${profile.username}`}
+              className="self-start sm:self-center"
+            />
           )}
         </div>
         {profile.bio && <p className="relative mt-5 max-w-2xl font-serif text-[17px] leading-relaxed text-foreground/90">{profile.bio}</p>}
@@ -79,6 +96,9 @@ export default async function AuthorPage({ params }: { params: Params }) {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <PenLine className="h-4 w-4" /> {formatWords(totalWords)} published
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="h-4 w-4" /> {followers.toLocaleString()} {followers === 1 ? "follower" : "followers"}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <CalendarDays className="h-4 w-4" /> Joined{" "}
@@ -102,6 +122,11 @@ export default async function AuthorPage({ params }: { params: Params }) {
             </li>
           ))}
         </ul>
+      )}
+      {me.user && !isMe && (
+        <div className="mt-12 flex justify-center">
+          <ReportButton targetType="profile" targetId={profile.id} />
+        </div>
       )}
     </div>
   );

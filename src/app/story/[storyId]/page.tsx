@@ -7,6 +7,8 @@ import { ShelfButton, type ShelfOption } from "@/components/reader/ShelfButton";
 import { OfflineButton } from "@/components/reader/OfflineButton";
 import { Expandable } from "@/components/reader/Expandable";
 import { ChapterIndex } from "@/components/reader/ChapterIndex";
+import { FollowButton } from "@/components/community/FollowButton";
+import { ReportButton } from "@/components/community/ReportButton";
 import { btn } from "@/components/ui/styles";
 import { BookOpen, BookmarkPlus, CalendarDays, Clock, ListOrdered } from "lucide-react";
 import { readingMinutes } from "@/lib/reader/text";
@@ -54,7 +56,7 @@ export default async function StoryPage({ params }: { params: Params }) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: chapters }, progressRes, shelvesRes] = await Promise.all([
+  const [{ data: chapters }, progressRes, shelvesRes, followRes, countsRes] = await Promise.all([
     supabase
       .from("chapters")
       .select("id, number, title, word_count, published_at, choice_points(id)")
@@ -77,7 +79,12 @@ export default async function StoryPage({ params }: { params: Params }) {
           .eq("shelf_items.story_id", story.id)
           .order("position")
       : Promise.resolve({ data: null }),
+    user
+      ? supabase.from("follows").select("id").eq("user_id", user.id).eq("story_id", story.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase.rpc("follower_counts", { p_story_id: story.id }),
   ]);
+  const followers = ((countsRes.data as { story: number } | null)?.story ?? 0) as number;
   const list = chapters ?? [];
   const resume = progressRes.data ? list.find((c) => c.id === progressRes.data!.chapter_id) : undefined;
   const first = list[0];
@@ -133,7 +140,7 @@ export default async function StoryPage({ params }: { params: Params }) {
             ) : (
               <span className={`${btn.secondary} pointer-events-none w-full text-muted sm:w-auto`}>No chapters yet</span>
             )}
-            <div className="grid grid-cols-2 gap-2 sm:flex">
+            <div className="grid grid-cols-3 gap-2 sm:flex">
               {shelves ? (
                 <ShelfButton storyId={story.id} shelves={shelves} />
               ) : (
@@ -141,6 +148,13 @@ export default async function StoryPage({ params }: { params: Params }) {
                   <BookmarkPlus className="h-4 w-4" /> Library
                 </Link>
               )}
+              <FollowButton
+                storyId={story.id}
+                initial={Boolean(followRes.data)}
+                signedIn={Boolean(user)}
+                loginHref={`/login?next=/story/${story.id}`}
+                count={followers}
+              />
               <OfflineButton storyId={story.id} title={story.title} coverUrl={story.cover_url} chapters={list.map((c) => c.number)} />
             </div>
           </div>
@@ -185,6 +199,11 @@ export default async function StoryPage({ params }: { params: Params }) {
           }))}
         />
       </div>
+      {user && user.id !== story.author_id && (
+        <div className="mt-10 flex justify-center">
+          <ReportButton targetType="story" targetId={story.id} />
+        </div>
+      )}
     </div>
   );
 }

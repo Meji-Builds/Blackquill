@@ -8,7 +8,7 @@ import { StoryActions } from "@/components/studio/StoryActions";
 import { StatusBadge } from "@/components/studio/StatusBadge";
 import { BackLink } from "@/components/ui/BackLink";
 import { btn } from "@/components/ui/styles";
-import { Eye } from "lucide-react";
+import { BarChart3, Eye } from "lucide-react";
 import { updateStory } from "../actions";
 import type { ChapterRow, Genre, StoryRow } from "@/lib/studio/types";
 
@@ -64,9 +64,14 @@ export default async function StoryStudioPage({ params }: { params: Params }) {
         <StatusBadge status={s.status} />
       </div>
       {s.status !== "draft" && (
-        <Link href={`/story/${s.id}`} className={`${btn.small} mt-3`}>
-          <Eye className="h-4 w-4" /> View as reader
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href={`/story/${s.id}`} className={btn.small}>
+            <Eye className="h-4 w-4" /> View as reader
+          </Link>
+          <Link href={`/studio/${s.id}/analytics`} className={btn.small}>
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </Link>
+        </div>
       )}
       <p className="mt-1 text-sm text-muted">
         {list.length} {list.length === 1 ? "chapter" : "chapters"} · {published} published ·{" "}

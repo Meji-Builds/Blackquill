@@ -95,6 +95,9 @@ export default async function ChapterPage({ params }: { params: Params }) {
     .eq("status", "approved")
     .order("scene_index");
   const panels = (panelRows ?? []).filter((p) => p.image_url) as { id: string; caption: string; image_url: string }[];
+  const { data: follow } = user
+    ? await supabase.from("follows").select("id").eq("user_id", user.id).eq("story_id", storyId).maybeSingle()
+    : { data: null };
   let choiceState: ChoiceState | null = null;
   if (choice) {
     const { data } = await supabase.rpc("choice_state", {
@@ -127,6 +130,7 @@ export default async function ChapterPage({ params }: { params: Params }) {
       initialSettings={parseSettings(settingsRaw)}
       choice={choice}
       panels={panels}
+      following={Boolean(follow)}
       choiceState={choiceState}
       hasSettingsCookie={Boolean(settingsRaw)}
       initialScroll={progress && progress.chapter_id === chapter.id ? progress.scroll_position : 0}

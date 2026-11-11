@@ -6,6 +6,7 @@ import { NavLinks } from "./nav/NavLinks";
 import { AccountMenu } from "./nav/AccountMenu";
 import { TabBar } from "./nav/TabBar";
 import { AuthSync } from "./nav/AuthSync";
+import { NotificationBell } from "./nav/NotificationBell";
 import { btn } from "./ui/styles";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -14,6 +15,7 @@ export interface Viewer {
   username: string;
   penName: string;
   isAdmin: boolean;
+  unread: number;
 }
 
 /** The signed-in reader, looked up once per request however many components ask. */
@@ -24,13 +26,17 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data } = await supabase
-    .from("profiles")
-    .select("username, display_name, is_admin")
-    .eq("id", user.id)
-    .single();
+  const [{ data }, { count }] = await Promise.all([
+    supabase.from("profiles").select("username, display_name, is_admin").eq("id", user.id).single(),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
+  ]);
   if (!data) return null;
-  return { username: data.username, penName: data.display_name || data.username, isAdmin: data.is_admin };
+  return {
+    username: data.username,
+    penName: data.display_name || data.username,
+    isAdmin: data.is_admin,
+    unread: count ?? 0,
+  };
 });
 
 export async function SiteHeader() {
@@ -49,7 +55,10 @@ export async function SiteHeader() {
               <Search className="h-5 w-5" />
             </Link>
             {viewer ? (
-              <AccountMenu viewer={viewer} />
+              <>
+                <NotificationBell initial={viewer.unread} />
+                <AccountMenu viewer={viewer} />
+              </>
             ) : (
               <>
                 <span className="hidden sm:block">

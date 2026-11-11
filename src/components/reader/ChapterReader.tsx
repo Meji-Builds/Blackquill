@@ -8,7 +8,10 @@ import { minFinishSeconds } from "@/lib/discovery/viewer";
 import { readingMinutes } from "@/lib/reader/text";
 import { ReaderSettingsPanel } from "./ReaderSettingsPanel";
 import { ChoiceBlock } from "./ChoiceBlock";
-import { AlignLeft, ChevronLeft, ChevronRight, Images, List, Type } from "lucide-react";
+import { AlignLeft, ChevronLeft, ChevronRight, Images, List, MessageCircle, Type } from "lucide-react";
+import { ChapterComments, ParagraphSheet, useComments } from "@/components/community/Comments";
+import { FollowButton } from "@/components/community/FollowButton";
+import { paragraphCounts } from "@/lib/community/types";
 import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
 import {
   FONTS,
@@ -52,6 +55,7 @@ export function ChapterReader(props: {
   choice: ChoicePoint | null;
   choiceState: ChoiceState | null;
   panels: { id: string; caption: string; image_url: string }[];
+  following: boolean;
 }) {
   const { storyId, chapterId, signedIn } = props;
   const [settings, setSettings] = useState<ReaderSettings>(props.initialSettings);
@@ -71,6 +75,13 @@ export function ChapterReader(props: {
   const gated = useRef(!choiceResolved);
   gated.current = !choiceResolved;
   const restored = useRef(false);
+  const comments = useComments(chapterId);
+  const counts = paragraphCounts(comments.comments);
+  // The paragraph the reader tapped (shows its comment button) and the one whose discussion is open.
+  const [selected, setSelected] = useState<number | null>(null);
+  const [sheet, setSheet] = useState<number | null>(null);
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const loginHref = `/login?next=/story/${storyId}/chapter/${props.number}`;
 
   // The device's saved settings win over the ones the page was rendered with. They differ for readers who saved
   // settings before they were kept in a cookie, and for pages saved offline before the reader changed settings.
@@ -183,6 +194,55 @@ export function ChapterReader(props: {
     ? Math.min(props.choice.anchor, props.paragraphs.length - 1)
     : props.paragraphs.length - 1;
   const texture = textureImage(settings.texture, t.dark);
+
+  // Tapping a paragraph (without selecting text) offers to comment on it; paragraphs with comments show a count.
+  const paragraph = (text: string, i: number) => {
+    const n = counts.get(i) ?? 0;
+    const active = selected === i;
+    return (
+      <div key={i} className="group relative">
+        <p
+          data-p={i}
+          onClick={() => {
+            if (window.getSelection()?.toString()) return;
+            setSelected(active ? null : i);
+          }}
+          className="-mx-2 cursor-text rounded-md px-2 whitespace-pre-line transition-colors"
+          style={active ? { background: t.dark ? "rgba(182,156,255,0.12)" : "rgba(143,107,255,0.10)" } : undefined}
+        >
+          {text}
+          {n > 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSheet(i);
+              }}
+              aria-label={`${n} ${n === 1 ? "comment" : "comments"} on this paragraph`}
+              className="relative -top-[0.1em] ml-1.5 inline-flex h-[1.5em] min-w-[1.9em] items-center justify-center gap-0.5 rounded-full px-1.5 align-middle font-sans text-[0.62em] font-semibold"
+              style={{ background: t.dark ? "rgba(182,156,255,0.16)" : "rgba(143,107,255,0.14)", color: t.dark ? "#cbb8ff" : "#5b3fd6" }}
+            >
+              <MessageCircle className="h-[1.1em] w-[1.1em]" /> {n}
+            </button>
+          )}
+        </p>
+        {active && (
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setSheet(i);
+                setSelected(null);
+              }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[var(--accent-strong)] px-4 font-sans text-sm font-medium text-white shadow-lg"
+            >
+              <MessageCircle className="h-4 w-4" /> {n > 0 ? `View ${n} ${n === 1 ? "comment" : "comments"}` : "Comment"}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const nav = (
     <nav className="flex items-center justify-between gap-3 text-sm">
@@ -304,11 +364,7 @@ export function ChapterReader(props: {
             } as React.CSSProperties
           }
         >
-          {props.paragraphs.slice(0, choiceAt + 1).map((p, i) => (
-            <p key={i} data-p={i} className="whitespace-pre-line">
-              {p}
-            </p>
-          ))}
+          {props.paragraphs.slice(0, choiceAt + 1).map((p, i) => paragraph(p, i))}
           {props.choice && (
             <ChoiceBlock
               choice={props.choice}
@@ -319,18 +375,18 @@ export function ChapterReader(props: {
             />
           )}
           {choiceResolved &&
-            props.paragraphs.slice(choiceAt + 1).map((p, i) => (
-              <p key={choiceAt + 1 + i} data-p={choiceAt + 1 + i} className="whitespace-pre-line">
-                {p}
-              </p>
-            ))}
+            props.paragraphs.slice(choiceAt + 1).map((p, i) => paragraph(p, choiceAt + 1 + i))}
         </article>
 
         <div className="mt-14 border-t pt-6" style={{ borderColor: t.border }}>
           {!props.nextNumber && (
-            <p className="mb-6 text-center text-sm" style={{ color: t.muted }}>
-              You are caught up. New chapters will appear here.
-            </p>
+            <div className="mb-8 rounded-2xl border px-5 py-5 text-center" style={{ borderColor: t.border }}>
+              <p className="font-medium">You&apos;re all caught up.</p>
+              <p className="mt-1 text-sm" style={{ color: t.muted }}>
+                Follow the story to hear when the next chapter is out.
+              </p>
+              <FollowButton storyId={storyId} initial={props.following} signedIn={signedIn} loginHref={loginHref} className="mt-4" />
+            </div>
           )}
           {nav}
           {!signedIn && (
@@ -342,6 +398,27 @@ export function ChapterReader(props: {
             </p>
           )}
         </div>
+
+        <ChapterComments
+          api={comments}
+          chapterId={chapterId}
+          signedIn={signedIn}
+          loginHref={loginHref}
+          t={t}
+          onOpenParagraph={setSheet}
+        />
+        {sheet !== null && (
+          <ParagraphSheet
+            api={comments}
+            chapterId={chapterId}
+            signedIn={signedIn}
+            loginHref={loginHref}
+            t={t}
+            index={sheet}
+            excerpt={props.paragraphs[sheet] ?? ""}
+            onClose={closeSheet}
+          />
+        )}
       </div>
     </div>
   );

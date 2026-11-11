@@ -64,7 +64,7 @@ export function ShelfButton({ storyId, shelves }: { storyId: string; shelves: Sh
       >
         {current.length ? <BookmarkCheck className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
         <span className="max-w-[9rem] truncate">{current.length ? current.map((s) => s.name).join(", ") : "Library"}</span>
-        <ChevronDown className={`h-4 w-4 opacity-60 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`hidden h-4 w-4 opacity-60 transition sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div role="menu" className="absolute left-0 z-20 mt-2 w-64 rounded-2xl border border-border bg-surface-2 p-1.5 shadow-2xl shadow-black/60">
