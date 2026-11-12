@@ -1,0 +1,332 @@
+/*
+ * The opening. Times are in units of --u so the whole piece can be sped up or slowed down in one place.
+ * Every element's resting style is its final pose; animations run from their first keyframe (fill: both).
+ *
+ *   0.15  a spark of gold light ignites            2.6  the breather hole lights; embers rise
+ *   0.95  it bursts into six obsidian shards       2.75 gold ink pours down the slit
+ *   1.65  the shards lock into the nib: flash      3.2  a drop falls from the tip
+ *   1.7   the crescent moon draws itself, rises    3.55 the ink spreads into a line; the name rises
+ *   2.0   aura turns; light sweeps the glass       5.9  the scene pushes forward and dissolves
+ */
+.oq-intro {
+  --u: 0.82s;
+  display: none;
+}
+html[data-intro] .oq-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #060509;
+  color: #f4f1fa;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: oq-exit calc(var(--u) * 0.8) cubic-bezier(0.6, 0, 0.4, 1) calc(var(--u) * 5.9) both;
+}
+.oq-intro--skip {
+  animation: oq-skip 0.45s ease-out both !important;
+}
+
+.oq-intro__haze {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle 58vmin at 50% 46%, rgba(111, 76, 255, 0.24), rgba(111, 76, 255, 0.08) 55%, transparent 100%),
+    radial-gradient(circle 34vmin at 50% 52%, rgba(230, 194, 122, 0.09), transparent 100%),
+    radial-gradient(circle 70vmax at 15% 100%, rgba(60, 30, 120, 0.22), transparent 100%);
+  animation: oq-haze calc(var(--u) * 6) ease-out both;
+}
+
+.oq-intro__dust span {
+  position: absolute;
+  border-radius: 9999px;
+  background: #e8dcff;
+  box-shadow: 0 0 6px rgba(200, 180, 255, 0.8);
+  opacity: 0.15;
+  animation: oq-twinkle 3s ease-in-out infinite alternate;
+}
+
+.oq-intro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  animation: oq-stage calc(var(--u) * 6.2) cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+
+.oq-intro__mark {
+  position: relative;
+  width: clamp(132px, 34vw, 196px);
+  aspect-ratio: 1;
+}
+.oq-intro__svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 18px rgba(143, 107, 255, 0.45));
+}
+
+/* A slow ring of violet and gold light turning behind the mark. */
+.oq-intro__aura {
+  position: absolute;
+  inset: -38%;
+  border-radius: 9999px;
+  background: conic-gradient(from 0deg, transparent, rgba(143, 107, 255, 0.35), transparent 30%, rgba(230, 194, 122, 0.3), transparent 60%, rgba(143, 107, 255, 0.3), transparent);
+  -webkit-mask: radial-gradient(closest-side, transparent 55%, #000 62%, #000 70%, transparent 78%);
+  mask: radial-gradient(closest-side, transparent 55%, #000 62%, #000 70%, transparent 78%);
+  filter: blur(6px);
+  animation:
+    oq-fade-in calc(var(--u) * 1.2) ease-out calc(var(--u) * 2) both,
+    oq-spin 14s linear infinite;
+}
+
+.oq-intro__embers span {
+  position: absolute;
+  bottom: 10%;
+  border-radius: 9999px;
+  background: #ffd98a;
+  box-shadow: 0 0 8px #ffcf70;
+  opacity: 0;
+  animation: oq-ember 2.8s ease-out infinite;
+}
+
+/* SVG parts */
+.oq-spark,
+.oq-facet,
+.oq-moon,
+.oq-hole,
+.oq-drop,
+.oq-flash,
+.oq-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.oq-spark {
+  opacity: 0;
+  animation: oq-spark calc(var(--u) * 1) ease-in-out calc(var(--u) * 0.15) both;
+}
+.oq-facet {
+  animation: oq-shard calc(var(--u) * 0.78) cubic-bezier(0.16, 0.9, 0.25, 1.06) calc(var(--u) * (0.95 + var(--i) * 0.07)) both;
+}
+.oq-flash {
+  opacity: 0;
+  animation: oq-flash calc(var(--u) * 0.7) ease-out calc(var(--u) * 1.62) both;
+}
+.oq-moon {
+  transform-origin: 50% 50%;
+  transform-box: view-box;
+  animation: oq-moon-rise calc(var(--u) * 1.3) cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--u) * 1.7) both;
+}
+.oq-moon__line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  animation: oq-draw calc(var(--u) * 0.9) cubic-bezier(0.5, 0, 0.3, 1) calc(var(--u) * 1.7) both;
+}
+.oq-moon__fill {
+  animation: oq-fade-in calc(var(--u) * 0.55) ease-out calc(var(--u) * 2.3) both;
+}
+.oq-sheen {
+  transform: translateX(60px);
+  animation: oq-sheen calc(var(--u) * 0.9) ease-in-out calc(var(--u) * 2.05) both;
+}
+.oq-glow {
+  animation:
+    oq-fade-in calc(var(--u) * 0.5) ease-out calc(var(--u) * 2.6) both,
+    oq-pulse 2.4s ease-in-out calc(var(--u) * 3.1) infinite;
+}
+.oq-hole {
+  animation: oq-pop calc(var(--u) * 0.45) cubic-bezier(0.3, 1.6, 0.5, 1) calc(var(--u) * 2.6) both;
+}
+.oq-slit {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: oq-pour calc(var(--u) * 0.5) cubic-bezier(0.6, 0, 0.4, 1) calc(var(--u) * 2.75) both;
+}
+.oq-drop {
+  opacity: 0;
+  animation: oq-drop calc(var(--u) * 0.6) cubic-bezier(0.55, 0, 0.9, 0.5) calc(var(--u) * 3.15) both;
+}
+
+/* The ink line the drop spreads into, and the name rising from it. */
+.oq-intro__ink {
+  height: 1px;
+  width: min(300px, 70vw);
+  margin-top: clamp(22px, 5vw, 34px);
+  background: linear-gradient(90deg, transparent, #e6c27a, transparent);
+  box-shadow: 0 0 12px rgba(230, 194, 122, 0.8);
+  opacity: 0;
+  animation: oq-ink calc(var(--u) * 1.6) cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--u) * 3.5) both;
+}
+.oq-intro__word {
+  margin-top: 10px;
+  display: flex;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(38px, 10vw, 60px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  animation: oq-tracking calc(var(--u) * 1.6) cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--u) * 3.55) both;
+}
+.oq-intro__word span {
+  display: inline-block;
+  animation: oq-letter calc(var(--u) * 0.9) cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--u) * (3.6 + var(--i) * 0.045)) both;
+}
+.oq-intro__gap {
+  width: 0.28em;
+}
+.oq-intro__gold {
+  background: linear-gradient(180deg, #f6dfa6, #c9963f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.oq-intro__tagline {
+  margin-top: 14px;
+  font-size: clamp(10px, 2.6vw, 12px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(230, 194, 122, 0.8);
+  animation: oq-rise calc(var(--u) * 0.8) ease-out calc(var(--u) * 4.35) both;
+}
+
+.oq-intro__skip {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: rgba(244, 241, 250, 0.4);
+  animation: oq-fade-in 0.6s ease-out calc(var(--u) * 1) both;
+}
+
+/* Keyframes */
+@keyframes oq-haze {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes oq-twinkle {
+  from { opacity: 0.08; }
+  to { opacity: 0.55; }
+}
+@keyframes oq-stage {
+  from { transform: scale(0.94); }
+  to { transform: scale(1); }
+}
+@keyframes oq-spark {
+  0% { opacity: 0; transform: scale(0); }
+  35% { opacity: 1; transform: scale(1); }
+  55% { transform: scale(0.75); }
+  80% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(3); }
+}
+@keyframes oq-shard {
+  from { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(0.3); }
+  40% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes oq-flash {
+  0% { opacity: 0; transform: scale(0.2); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@keyframes oq-moon-rise {
+  from { opacity: 0; transform: rotate(-70deg) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes oq-draw {
+  0% { stroke-dashoffset: 1; opacity: 1; }
+  70% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes oq-sheen {
+  from { transform: translateX(0); }
+  to { transform: translateX(60px); }
+}
+@keyframes oq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes oq-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.25); }
+}
+@keyframes oq-pop {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes oq-pour {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes oq-drop {
+  0% { opacity: 0; transform: translateY(-2px) scale(0.4); }
+  25% { opacity: 1; transform: translateY(0) scale(1, 1.15); }
+  100% { opacity: 0; transform: translateY(14px) scale(0.7, 1.5); }
+}
+@keyframes oq-ink {
+  0% { opacity: 0; transform: scaleX(0); }
+  25% { opacity: 1; }
+  60% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0.25; transform: scaleX(1); }
+}
+@keyframes oq-tracking {
+  from { letter-spacing: 0.16em; }
+  to { letter-spacing: 0.02em; }
+}
+@keyframes oq-letter {
+  from { opacity: 0; transform: translateY(0.35em); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes oq-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes oq-spin {
+  to { rotate: 360deg; }
+}
+@keyframes oq-ember {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  15% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-160px) translateX(10px) scale(0.3); }
+}
+@keyframes oq-exit {
+  0% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@keyframes oq-skip {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* The push forward through the mark as the scene dissolves. */
+html[data-intro] .oq-intro .oq-intro__stage {
+  animation:
+    oq-stage calc(var(--u) * 5.9) cubic-bezier(0.3, 0, 0.2, 1) both,
+    oq-push calc(var(--u) * 0.8) cubic-bezier(0.6, 0, 0.4, 1) calc(var(--u) * 5.9) forwards;
+}
+@keyframes oq-push {
+  from { transform: scale(1); filter: blur(0); }
+  to { transform: scale(1.18); filter: blur(4px); }
+}
+
+/* Reduced motion: the finished frame fades in, holds, and fades out. */
+@media (prefers-reduced-motion: reduce) {
+  .oq-intro *,
+  html[data-intro] .oq-intro .oq-intro__stage {
+    animation: none !important;
+  }
+  html[data-intro] .oq-intro {
+    animation:
+      oq-fade-in 0.4s ease-out both,
+      oq-exit 0.5s ease-in 1.8s forwards;
+  }
+}

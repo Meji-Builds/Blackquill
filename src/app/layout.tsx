@@ -10,6 +10,8 @@ import "./globals.css";
 import { SiteHeader, SiteTabBar } from "@/components/SiteHeader";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { siteUrl } from "@/lib/seo/site";
+import { IntroSplash } from "@/components/intro/IntroSplash";
+import { INTRO_BOOT } from "@/components/intro/boot";
 
 export const metadata: Metadata = {
   title: { default: "Obsidian Quill", template: "%s · Obsidian Quill" },
@@ -27,8 +29,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    // The opening decides in <head> (before first paint) whether to play, by setting data-intro on <html>.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_BOOT }} />
+      </head>
       <body className="min-h-screen antialiased">
+        <IntroSplash />
         <SiteHeader />
         <main>{children}</main>
         <SiteTabBar />
