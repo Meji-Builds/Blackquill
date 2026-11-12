@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { PicturePicker } from "@/components/settings/PicturePicker";
 import { ChangePassword } from "@/components/settings/ChangePassword";
+import { PushSettings } from "@/components/settings/PushSettings";
 import { btn, card } from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "Profile and settings" };
@@ -13,7 +14,7 @@ export default async function SettingsPage() {
   const { supabase, user } = await requireUser("/settings");
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name, bio, show_mature, created_at, avatar_url")
+    .select("username, display_name, bio, show_mature, created_at, avatar_url, push_prefs")
     .eq("id", user.id)
     .single();
   if (!profile) return null;
@@ -59,6 +60,12 @@ export default async function SettingsPage() {
         <Link href="/translate" className={`${btn.small} mt-4`}>
           <Languages className="h-4 w-4" /> Open the translation desk
         </Link>
+      </section>
+
+      <section id="notifications" className={`${card} mt-6 scroll-mt-20 p-5 sm:p-6`}>
+        <h2 className="font-display text-2xl font-semibold">Phone notifications</h2>
+        <p className="mt-1 mb-5 text-sm text-muted">Alerts on this phone or computer, even when Obsidian Quill isn&apos;t open.</p>
+        <PushSettings prefs={(profile.push_prefs as Record<string, boolean> | null) ?? {}} />
       </section>
 
       <section className={`${card} mt-6 p-5 sm:p-6`}>

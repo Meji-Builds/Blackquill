@@ -8,6 +8,7 @@ import { threads, timeAgo, type CommentView } from "@/lib/community/types";
 import type { Palette } from "@/components/reader/settings";
 import { ReportButton } from "./ReportButton";
 import { Avatar } from "@/components/Avatar";
+import { LikeButton } from "./LikeButton";
 
 /** Loads a chapter's comments once and keeps them in sync with what this reader posts, edits and deletes. */
 export function useComments(chapterId: string) {
@@ -219,7 +220,7 @@ function ThreadList({ list, ...p }: Shared & { list: ReturnType<typeof threads> 
   );
 }
 
-function CommentItem({ c, onReply, api, t, signedIn }: Shared & { c: CommentView; onReply: () => void }) {
+function CommentItem({ c, onReply, api, t, signedIn, loginHref }: Shared & { c: CommentView; onReply: () => void }) {
   const mine = api.me === c.userId;
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -297,6 +298,17 @@ function CommentItem({ c, onReply, api, t, signedIn }: Shared & { c: CommentView
         {error && <p role="alert" className="mt-1 text-sm text-[#e5484d]">{error}</p>}
         {!editing && (
           <div className="mt-1.5 flex items-center gap-1 text-sm" style={{ color: t.muted }}>
+            {!c.hidden && (
+              <LikeButton
+                target={{ commentId: c.id }}
+                initialCount={c.likes}
+                initialLiked={c.liked}
+                signedIn={signedIn}
+                own={mine}
+                loginHref={loginHref}
+                label="Like comment"
+              />
+            )}
             {signedIn && (
               <button onClick={onReply} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 -ml-2 hover:underline">
                 <Reply className="h-4 w-4" /> Reply

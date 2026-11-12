@@ -7,8 +7,10 @@
  *   oq-static   Hashed app files (/_next/static), icons and fonts. Cache-first, trimmed to 400.
  *
  * The writer studio, sign-in and auth routes are never cached: editing offline could lose work.
+ *
+ * Also shows phone notifications (Web Push) sent by /api/push, and opens the right page when one is tapped.
  */
-const VERSION = "v3";
+const VERSION = "v4";
 const OFFLINE = "oq-offline";
 const PAGES = "oq-pages";
 const STATIC = "oq-static";
@@ -117,7 +119,14 @@ self.addEventListener("fetch", (event) => {
 
   // Signing out clears everything personal that was saved for offline use.
   if (request.method === "POST" && url.pathname === "/auth/signout") {
-    event.waitUntil(Promise.all([caches.delete(OFFLINE), caches.delete(PAGES)]));
+    // and stops phone notifications meant for the person who was signed in.
+    event.waitUntil(
+      Promise.all([
+        caches.delete(OFFLINE),
+        caches.delete(PAGES),
+        self.registration.pushManager?.getSubscription().then((s) => s && s.unsubscribe()).catch(() => {}),
+      ]),
+    );
     return;
   }
   if (request.method !== "GET") return;
@@ -152,4 +161,44 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("message", (event) => {
   if (event.data === "version") event.source?.postMessage({ version: VERSION });
+});
+
+// ---------------------------------------------------------------------------
+// Phone notifications
+// ---------------------------------------------------------------------------
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "Obsidian Quill", body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Obsidian Quill", {
+      body: data.body || "",
+      icon: data.icon || "/icons/icon-192.png",
+      badge: "/icons/badge-96.png",
+      tag: data.tag,
+      renotify: Boolean(data.tag),
+      timestamp: data.ts || Date.now(),
+      data: { url: data.url || "/notifications" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/notifications", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      // Reuse an open Obsidian Quill window rather than stacking new ones.
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        if ("navigate" in open) return open.navigate(url).catch(() => self.clients.openWindow(url));
+      }
+      return self.clients.openWindow(url);
+    })(),
+  );
 });

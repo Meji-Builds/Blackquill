@@ -14,6 +14,8 @@ const c = (id: string, parentId: string | null, paragraphIndex: number | null): 
   username: "u",
   name: "U",
   isAuthor: false,
+  likes: 0,
+  liked: false,
   avatarUrl: null,
 });
 

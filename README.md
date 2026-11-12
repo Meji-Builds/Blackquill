@@ -35,13 +35,17 @@ Vercel.
    | `NEXT_PUBLIC_SITE_URL` | Your production address, e.g. `https://obsidianquill.vercel.app` (used for links, the sitemap and share cards) |
    | `OPENAI_API_KEY` | Optional. Without it, comic panels use the built-in demo artwork and cost nothing |
    | `OPENAI_IMAGE_MODEL` | Optional, defaults to `gpt-image-1` |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Needed for machine translation (Settings > API, "service_role"). Server-only: never expose it to the browser |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Needed for machine translation and phone notifications (Settings > API, "service_role"). Server-only: never expose it to the browser |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` | Phone notifications. Make a pair once with `npx web-push generate-vapid-keys` and keep them: changing them signs everyone out of alerts. The private one is a secret |
    | `DEEPL_API_KEY` or `ANTHROPIC_API_KEY` | Optional machine translation service. With none set (or no service key), readers can still read volunteer translations, but machine translation is hidden. `OPENAI_API_KEY` also works. `TRANSLATION_PROVIDER` (deepl, anthropic, openai) picks one when several are set |
 
 4. **Make yourself an admin.** Sign up on the live site, then in the SQL editor run
    `update public.profiles set is_admin = true where username = 'your_username';`. The account menu then shows
    Moderation (`/admin`): the report queue, takedowns and the stories featured for comic panels.
-5. **Check:** `/robots.txt`, `/sitemap.xml` and a story's share card (`/story/<id>/opengraph-image`) should load.
+5. **Phone notifications:** after the migrations, turn on `pg_net` under Database > Extensions if it isn't on. The
+   database calls `https://obsidianquill.vercel.app/api/push` whenever a notification is added; on another address run
+   `update public.private_push_settings set endpoint = 'https://your-site/api/push';`.
+6. **Check:** `/robots.txt`, `/sitemap.xml` and a story's share card (`/story/<id>/opengraph-image`) should load.
 
 Built-in limits (all enforced in the database): 10 comments per person per 5 minutes, 20 reports a day, 10 new
 stories a day, 30 published chapters an hour, comic generations capped per chapter and at 60 per writer per day.
@@ -124,6 +128,16 @@ the moderation queue in one click.
 - Follow a story (new chapter alerts) or an author (alerts for all their stories); follower counts are public.
 - Notifications: new chapters from followed stories and authors, replies, comments on your stories and new
   followers. The header bell shows the unread count.
+- Likes on chapters (at the end of each chapter) and on comments. Writers see the count on their own chapters and
+  comments. Liking notifies the writer once per person (unliking and liking again doesn't notify twice).
+- Phone notifications (Web Push), even when the app is closed: turn them on in Settings > Phone notifications or from
+  the prompt on the notifications page, per device, and choose which kinds arrive (new chapters, comments and replies,
+  likes, new followers, translations). Several likes on the same thing replace each other on the phone ("Ada and 3
+  others liked your comment"). Tapping an alert marks it read and opens the chapter, comment or profile. Works in the
+  installed Android app and in Chrome, Edge, Firefox and Safari; on iPhone and iPad, after adding the app to the Home
+  Screen (iOS 16.4 or later). Signing out stops alerts on that device; devices that uninstall are forgotten
+  automatically. Every new notification row is pushed once: a trigger asks `/api/push` (via pg_net) to send what is
+  waiting, so chapters published on a schedule alert followers too.
 - Writer analytics per story (Studio > Analytics): readers, chapter completion, returning readers, library adds,
   followers and comments over 7, 30 or 90 days; readers per day; readers and finishers per chapter with the biggest
   drop-off called out; Fresh Shelf and ranking status.

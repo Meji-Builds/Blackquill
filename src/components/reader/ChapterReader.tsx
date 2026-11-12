@@ -16,6 +16,7 @@ import { language, languageLabel } from "@/lib/translation/languages";
 import type { ReaderLanguages, ShownTranslation } from "@/lib/translation/resolve";
 import { ChapterComments, ParagraphSheet, useComments } from "@/components/community/Comments";
 import { FollowButton } from "@/components/community/FollowButton";
+import { LikeButton } from "@/components/community/LikeButton";
 import { ShareButton } from "@/components/community/ShareButton";
 import { paragraphCounts } from "@/lib/community/types";
 import type { ChoicePoint, ChoiceState } from "@/lib/choices/types";
@@ -70,6 +71,7 @@ export function ChapterReader(props: {
   choiceState: ChoiceState | null;
   panels: { id: string; caption: string; image_url: string }[];
   following: boolean;
+  likes: { count: number; liked: boolean; own: boolean };
   languages: ReaderLanguages;
   shown: ShownTranslation | null;
 }) {
@@ -473,7 +475,17 @@ export function ChapterReader(props: {
             </div>
           )}
           {nav}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-wrap justify-center gap-2" style={{ color: t.muted }}>
+            <LikeButton
+              target={{ chapterId }}
+              initialCount={props.likes.count}
+              initialLiked={props.likes.liked}
+              own={props.likes.own}
+              signedIn={signedIn}
+              loginHref={loginHref}
+              size="lg"
+              label="Like this chapter"
+            />
             <ShareButton
               path={`/story/${storyId}/chapter/${props.number}`}
               title={`${props.storyTitle} · Chapter ${props.number}`}

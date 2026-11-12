@@ -107,6 +107,12 @@ export default async function ChapterPage({ params, searchParams }: { params: Pa
   const { data: follow } = user
     ? await supabase.from("follows").select("id").eq("user_id", user.id).eq("story_id", storyId).maybeSingle()
     : { data: null };
+  const [{ count: likeCount }, { data: myLike }] = await Promise.all([
+    supabase.from("chapter_likes").select("user_id", { count: "exact", head: true }).eq("chapter_id", chapter.id),
+    user
+      ? supabase.from("chapter_likes").select("user_id").eq("chapter_id", chapter.id).eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
   // The language this reader reads the story in, and the chapter text in it.
   const chosen = await chosenLanguage(story.id, langParam, story.language);
   const { data: langInfo } = await supabase.rpc("story_languages", { p_story_id: story.id });
@@ -153,6 +159,7 @@ export default async function ChapterPage({ params, searchParams }: { params: Pa
       choice={choice}
       panels={panels}
       following={Boolean(follow)}
+      likes={{ count: likeCount ?? 0, liked: Boolean(myLike), own: user?.id === story.author_id }}
       choiceState={choiceState}
       hasSettingsCookie={Boolean(settingsRaw)}
       initialScroll={progress && progress.chapter_id === chapter.id ? progress.scroll_position : 0}

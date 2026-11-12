@@ -12,6 +12,9 @@ export interface CommentView {
   avatarUrl: string | null;
   /** Written by the story's author. */
   isAuthor: boolean;
+  likes: number;
+  /** Liked by the person reading. */
+  liked: boolean;
 }
 
 export interface Thread {

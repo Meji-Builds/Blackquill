@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { languageLabel } from "@/lib/translation/languages";
-import { Languages, BellOff, BookOpen, MessageCircle, Reply, UserPlus } from "lucide-react";
+import { Languages, BellOff, BookOpen, Heart, MessageCircle, Reply, Settings, UserPlus } from "lucide-react";
+import { notificationHref, type NotificationKind } from "@/lib/notifications/text";
+import { PushSettings } from "@/components/settings/PushSettings";
 import { requireUser } from "@/lib/auth";
 import { timeAgo } from "@/lib/community/types";
 import { MarkRead } from "@/components/community/MarkRead";
@@ -11,7 +13,7 @@ export const metadata: Metadata = { title: "Notifications" };
 
 interface Row {
   id: string;
-  kind: "new_chapter" | "comment_reply" | "story_comment" | "new_follower" | "translator_request" | "translator_invite" | "translator_approved" | "translator_declined";
+  kind: NotificationKind;
   language: string | null;
   read_at: string | null;
   created_at: string;
@@ -27,34 +29,44 @@ function describe(n: Row) {
   const story = n.stories?.title ?? "a story";
   const chapter = n.chapters ? `Chapter ${n.chapters.number}${n.chapters.title ? `: ${n.chapters.title}` : ""}` : "";
   const lang = n.language ? languageLabel(n.language) : "another language";
-  const chapterHref = n.stories && n.chapters ? `/story/${n.stories.id}/chapter/${n.chapters.number}` : n.stories ? `/story/${n.stories.id}` : "/";
+  const href = notificationHref({
+    kind: n.kind,
+    storyId: n.stories?.id ?? null,
+    chapterNumber: n.chapters?.number ?? null,
+    actorUsername: n.actor?.username ?? null,
+    language: n.language,
+  });
   switch (n.kind) {
     case "new_chapter":
-      return { icon: BookOpen, href: chapterHref, text: <><b>{story}</b> has a new chapter: {chapter}</> };
+      return { icon: BookOpen, href, text: <><b>{story}</b> has a new chapter: {chapter}</> };
     case "comment_reply":
-      return { icon: Reply, href: `${chapterHref}#comments`, text: <><b>{who}</b> replied to your comment on <b>{story}</b></> };
+      return { icon: Reply, href, text: <><b>{who}</b> replied to your comment on <b>{story}</b></> };
     case "story_comment":
-      return { icon: MessageCircle, href: `${chapterHref}#comments`, text: <><b>{who}</b> commented on {chapter || "a chapter"} of <b>{story}</b></> };
+      return { icon: MessageCircle, href, text: <><b>{who}</b> commented on {chapter || "a chapter"} of <b>{story}</b></> };
     case "translator_request":
       return {
         icon: Languages,
-        href: n.stories ? `/studio/${n.stories.id}#translations` : "/studio",
+        href,
         text: <><b>{who}</b> offered to translate <b>{story}</b> into {lang}</>,
       };
     case "translator_invite":
-      return { icon: Languages, href: "/translate", text: <><b>{who}</b> invited you to translate <b>{story}</b> into {lang}</> };
+      return { icon: Languages, href, text: <><b>{who}</b> invited you to translate <b>{story}</b> into {lang}</> };
     case "translator_approved":
       return {
         icon: Languages,
-        href: n.stories && n.language ? `/translate/${n.stories.id}/${n.language}` : "/translate",
+        href,
         text: <><b>{who}</b> said yes: <b>{story}</b> can be translated into {lang}</>,
       };
     case "translator_declined":
-      return { icon: Languages, href: "/translate", text: <><b>{who}</b> declined translating <b>{story}</b> into {lang}</> };
+      return { icon: Languages, href, text: <><b>{who}</b> declined translating <b>{story}</b> into {lang}</> };
+    case "chapter_like":
+      return { icon: Heart, href, text: <><b>{who}</b> liked {chapter || "a chapter"} of <b>{story}</b></> };
+    case "comment_like":
+      return { icon: Heart, href, text: <><b>{who}</b> liked your comment on <b>{story}</b></> };
     case "new_follower":
       return {
         icon: UserPlus,
-        href: n.actor ? `/author/${n.actor.username}` : "/",
+        href,
         text: n.story_id ? <><b>{who}</b> followed <b>{story}</b></> : <><b>{who}</b> started following you</>,
       };
   }
@@ -77,9 +89,15 @@ export default async function NotificationsPage() {
     <div className="mx-auto max-w-2xl px-4 pt-6 pb-12 sm:pt-10">
       <h1 className="font-display text-[38px] leading-tight font-semibold">Notifications</h1>
       <p className="mt-1 text-sm text-muted">
-        New chapters from stories and authors you follow, replies to your comments and news about your own stories.
+        New chapters from stories and authors you follow, replies and likes, and news about your own stories.
       </p>
-      {unread > 0 && <MarkRead />}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {unread > 0 && <MarkRead />}
+        <Link href="/settings#notifications" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
+          <Settings className="h-4 w-4" /> Phone notifications
+        </Link>
+      </div>
+      <PushSettings variant="prompt" />
 
       {rows.length === 0 ? (
         <div className="mt-10 rounded-3xl border border-dashed border-border-strong px-6 py-12 text-center">
@@ -115,7 +133,7 @@ export default async function NotificationsPage() {
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] leading-snug [&_b]:font-semibold">{d.text}</span>
-                    {n.comments?.body && (n.kind === "comment_reply" || n.kind === "story_comment") && (
+                    {n.comments?.body && (n.kind === "comment_reply" || n.kind === "story_comment" || n.kind === "comment_like") && (
                       <span className="mt-1 line-clamp-2 block font-serif text-[15px] text-muted italic">“{n.comments.body}”</span>
                     )}
                     <span className="mt-1 block text-xs text-muted">{timeAgo(n.created_at)}</span>

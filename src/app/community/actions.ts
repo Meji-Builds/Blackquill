@@ -41,7 +41,7 @@ export async function setFollow(
   return { ok: true, following: follow };
 }
 
-const COMMENT_SELECT = "id, body, paragraph_index, parent_id, created_at, updated_at, is_hidden, user_id, profiles(username, display_name, avatar_url)";
+const COMMENT_SELECT = "id, body, paragraph_index, parent_id, created_at, updated_at, is_hidden, user_id, profiles!comments_user_id_fkey(username, display_name, avatar_url), comment_likes(count)";
 
 type Row = {
   id: string;
@@ -53,9 +53,10 @@ type Row = {
   is_hidden: boolean;
   user_id: string;
   profiles: { username: string; display_name: string | null; avatar_url: string | null } | null;
+  comment_likes: { count: number }[] | null;
 };
 
-function toView(r: Row, authorId: string | null): CommentView {
+function toView(r: Row, authorId: string | null, liked = false): CommentView {
   return {
     id: r.id,
     body: r.body,
@@ -69,6 +70,8 @@ function toView(r: Row, authorId: string | null): CommentView {
     name: r.profiles?.display_name || r.profiles?.username || "Reader",
     avatarUrl: r.profiles?.avatar_url ?? null,
     isAuthor: authorId !== null && r.user_id === authorId,
+    likes: r.comment_likes?.[0]?.count ?? 0,
+    liked,
   };
 }
 
@@ -84,7 +87,17 @@ export async function loadComments(chapterId: string): Promise<{ comments: Comme
     .order("created_at")
     .limit(500);
   if (error) return { comments: [], me: user?.id ?? null, error: error.message };
-  return { comments: (data as unknown as Row[]).map((r) => toView(r, authorId)), me: user?.id ?? null };
+  const rows = data as unknown as Row[];
+  const mine = new Set<string>();
+  if (user && rows.length) {
+    const { data: likes } = await supabase
+      .from("comment_likes")
+      .select("comment_id, comments!inner(chapter_id)")
+      .eq("user_id", user.id)
+      .eq("comments.chapter_id", chapterId);
+    for (const l of likes ?? []) mine.add(l.comment_id);
+  }
+  return { comments: rows.map((r) => toView(r, authorId, mine.has(r.id))), me: user?.id ?? null };
 }
 
 export async function postComment(input: {
@@ -175,4 +188,65 @@ export async function fileReport(
     return fail(error.message);
   }
   return { ok: true };
+}
+
+/** Like or unlike a chapter or a comment. Returns the new state and count. */
+export async function setLike(
+  target: { chapterId?: string; commentId?: string },
+  like: boolean,
+): Promise<ActionResult & { liked?: boolean; count?: number }> {
+  const { supabase, user } = await currentUser();
+  if (!user) return fail("Sign in to like.");
+  const table = target.chapterId ? "chapter_likes" : "comment_likes";
+  const column = target.chapterId ? "chapter_id" : "comment_id";
+  const id = target.chapterId ?? target.commentId;
+  if (!id) return fail("Nothing to like.");
+  if (like) {
+    const { error } = await supabase.from(table).insert({ user_id: user.id, [column]: id });
+    if (error && error.code !== "23505") return fail(/row-level security/.test(error.message) ? "You can't like this." : error.message);
+  } else {
+    const { error } = await supabase.from(table).delete().eq("user_id", user.id).eq(column, id);
+    if (error) return fail(error.message);
+  }
+  const { count } = await supabase.from(table).select("user_id", { count: "exact", head: true }).eq(column, id);
+  return { ok: true, liked: like, count: count ?? 0 };
+}
+
+/** Likes on a chapter, and whether the reader liked it. */
+export async function chapterLikes(chapterId: string): Promise<{ count: number; liked: boolean }> {
+  const { supabase, user } = await currentUser();
+  const [{ count }, mine] = await Promise.all([
+    supabase.from("chapter_likes").select("user_id", { count: "exact", head: true }).eq("chapter_id", chapterId),
+    user
+      ? supabase.from("chapter_likes").select("user_id").eq("chapter_id", chapterId).eq("user_id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  return { count: count ?? 0, liked: Boolean(mine.data) };
+}
+
+/** Remember this device for phone notifications. */
+export async function savePushSubscription(sub: { endpoint: string; p256dh: string; auth: string }): Promise<ActionResult> {
+  const { supabase, user } = await currentUser();
+  if (!user) return fail("Sign in first.");
+  if (!/^https:\/\//.test(sub.endpoint)) return fail("This browser can't receive notifications.");
+  const { error } = await supabase.rpc("save_push_subscription", { p_endpoint: sub.endpoint, p_p256dh: sub.p256dh, p_auth: sub.auth });
+  return error ? fail(error.message) : { ok: true };
+}
+
+/** Stop phone notifications on this device. */
+export async function removePushSubscription(endpoint: string): Promise<ActionResult> {
+  const { supabase, user } = await currentUser();
+  if (!user) return fail("Sign in first.");
+  const { error } = await supabase.from("push_subscriptions").delete().eq("user_id", user.id).eq("endpoint", endpoint);
+  return error ? fail(error.message) : { ok: true };
+}
+
+/** Which kinds of alerts reach the phone. */
+export async function setPushPrefs(prefs: Record<string, boolean>): Promise<ActionResult> {
+  const { supabase, user } = await currentUser();
+  if (!user) return fail("Sign in first.");
+  const allowed = ["chapters", "comments", "likes", "followers", "translations"];
+  const clean = Object.fromEntries(Object.entries(prefs).filter(([k, v]) => allowed.includes(k) && typeof v === "boolean"));
+  const { error } = await supabase.from("profiles").update({ push_prefs: clean }).eq("id", user.id);
+  return error ? fail(error.message) : { ok: true };
 }
