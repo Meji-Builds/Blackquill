@@ -7,6 +7,7 @@ import { deleteComment, editComment, loadComments, postComment } from "@/app/com
 import { threads, timeAgo, type CommentView } from "@/lib/community/types";
 import type { Palette } from "@/components/reader/settings";
 import { ReportButton } from "./ReportButton";
+import { Avatar } from "@/components/Avatar";
 
 /** Loads a chapter's comments once and keeps them in sync with what this reader posts, edits and deletes. */
 export function useComments(chapterId: string) {
@@ -247,11 +248,11 @@ function CommentItem({ c, onReply, api, t, signedIn }: Shared & { c: CommentView
     <article className="flex gap-3">
       <Link
         href={`/author/${c.username}`}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8f6bff] to-[#5b3fd6] text-sm font-semibold text-white"
+        className="shrink-0 rounded-full"
         aria-hidden="true"
         tabIndex={-1}
       >
-        {c.name.charAt(0).toUpperCase()}
+        <Avatar url={c.avatarUrl} name={c.name} seed={c.username} size={32} />
       </Link>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 text-sm">

@@ -5,6 +5,7 @@ import { Languages, BellOff, BookOpen, MessageCircle, Reply, UserPlus } from "lu
 import { requireUser } from "@/lib/auth";
 import { timeAgo } from "@/lib/community/types";
 import { MarkRead } from "@/components/community/MarkRead";
+import { Avatar } from "@/components/Avatar";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -15,7 +16,7 @@ interface Row {
   read_at: string | null;
   created_at: string;
   story_id: string | null;
-  actor: { username: string; display_name: string | null } | null;
+  actor: { username: string; display_name: string | null; avatar_url: string | null } | null;
   stories: { id: string; title: string } | null;
   chapters: { number: number; title: string } | null;
   comments: { body: string } | null;
@@ -64,7 +65,7 @@ export default async function NotificationsPage() {
   const { data } = await supabase
     .from("notifications")
     .select(
-      "id, kind, read_at, created_at, story_id, language, actor:profiles!notifications_actor_id_fkey(username, display_name), stories(id, title), chapters(number, title), comments(body)",
+      "id, kind, read_at, created_at, story_id, language, actor:profiles!notifications_actor_id_fkey(username, display_name, avatar_url), stories(id, title), chapters(number, title), comments(body)",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -99,9 +100,19 @@ export default async function NotificationsPage() {
             return (
               <li key={n.id}>
                 <Link href={d.href} className={`flex gap-3.5 px-4 py-4 transition hover:bg-surface-2 ${n.read_at ? "" : "bg-accent/[0.06]"}`}>
-                  <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${n.read_at ? "bg-surface-3 text-muted" : "bg-accent/15 text-accent"}`}>
-                    <Icon className="h-[18px] w-[18px]" />
-                  </span>
+                  {n.actor && n.kind !== "new_chapter" ? (
+                    // The person who did it, with a small badge saying what they did.
+                    <span className="relative mt-0.5 h-9 w-9 shrink-0">
+                      <Avatar url={n.actor.avatar_url} name={n.actor.display_name || n.actor.username} seed={n.actor.username} size={36} />
+                      <span className={`absolute -right-1 -bottom-1 flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 border-surface ${n.read_at ? "bg-surface-3 text-muted" : "bg-accent-strong text-white"}`}>
+                        <Icon className="h-2.5 w-2.5" />
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${n.read_at ? "bg-surface-3 text-muted" : "bg-accent/15 text-accent"}`}>
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] leading-snug [&_b]:font-semibold">{d.text}</span>
                     {n.comments?.body && (n.kind === "comment_reply" || n.kind === "story_comment") && (

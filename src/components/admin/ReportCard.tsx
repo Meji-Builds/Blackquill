@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { BookOpen, ExternalLink, FileText, Loader2, MessageCircle, UserRound } from "lucide-react";
-import { resolveReports } from "@/app/admin/actions";
+import { removeProfilePicture, resolveReports } from "@/app/admin/actions";
+import { Avatar } from "@/components/Avatar";
 import { btn } from "@/components/ui/styles";
 import { timeAgo } from "@/lib/community/types";
 
@@ -19,6 +20,8 @@ export interface QueueItem {
   href: string | null;
   owner_username: string | null;
   is_removed: boolean;
+  /** The profile picture of the reported person (profiles) or commenter (comments). */
+  image: string | null;
 }
 
 const ICONS = { story: BookOpen, chapter: FileText, comment: MessageCircle, profile: UserRound };
@@ -29,16 +32,27 @@ export function ReportCard({ item, resolved }: { item: QueueItem; resolved?: boo
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const Icon = ICONS[item.target_type];
-  const removeLabel = item.target_type === "comment" ? "Hide comment" : "Take story down";
-  const canRemove = item.target_type !== "profile";
+  const removeLabel = item.target_type === "comment" ? "Hide comment" : item.target_type === "profile" ? "Clear picture and bio" : "Take story down";
+  const [picture, setPicture] = useState(item.image);
 
   function act(action: "dismiss" | "remove" | "restore") {
     if (action === "remove" && !confirm(`${removeLabel}? Readers will no longer see it.`)) return;
+    if (action === "remove" && item.target_type === "profile") setPicture(null);
     setError(null);
     start(async () => {
       const r = await resolveReports(item.target_type, item.target_id, action, note);
       if (!r.ok) setError(r.error);
-      else setDone(action === "dismiss" ? "Dismissed" : action === "remove" ? (item.target_type === "comment" ? "Comment hidden" : "Story taken down") : "Restored");
+      else setDone(action === "dismiss" ? "Dismissed" : action === "remove" ? (item.target_type === "comment" ? "Comment hidden" : item.target_type === "profile" ? "Picture and bio cleared" : "Story taken down") : "Restored");
+    });
+  }
+
+  function clearPicture() {
+    if (!item.owner_username || !confirm(`Remove @${item.owner_username}'s profile picture?`)) return;
+    setError(null);
+    start(async () => {
+      const r = await removeProfilePicture(item.owner_username!);
+      if (!r.ok) setError(r.error);
+      else setPicture(null);
     });
   }
 
@@ -64,6 +78,19 @@ export function ReportCard({ item, resolved }: { item: QueueItem; resolved?: boo
           {item.reports} {item.reports === 1 ? "report" : "reports"}
         </span>
       </div>
+      {picture && (
+        <div className="mt-3 flex items-center gap-3 rounded-xl bg-background px-3.5 py-2.5">
+          <Avatar url={picture} name={item.owner_username ?? "?"} size={72} />
+          <div className="min-w-0 text-sm">
+            <p className="text-muted">Profile picture of @{item.owner_username}</p>
+            {!done && (
+              <button onClick={clearPicture} disabled={pending} className="mt-1 font-medium text-danger hover:underline">
+                Remove picture
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {item.excerpt && <p className="mt-3 line-clamp-4 rounded-xl bg-background px-3.5 py-2.5 font-serif text-[15px] text-foreground/85">{item.excerpt}</p>}
       <ul className="mt-3 space-y-1 text-sm">
         {item.reasons.slice(0, 5).map((r, i) => (
@@ -101,12 +128,11 @@ export function ReportCard({ item, resolved }: { item: QueueItem; resolved?: boo
                 Dismiss
               </button>
             )}
-            {item.is_removed ? (
+            {item.is_removed && item.target_type !== "profile" ? (
               <button onClick={() => act("restore")} disabled={pending} className={btn.small}>
                 Restore
               </button>
             ) : (
-              canRemove &&
               !resolved && (
                 <button onClick={() => act("remove")} disabled={pending} className={`${btn.small} border-danger/40 text-danger hover:bg-danger/10`}>
                   {removeLabel}

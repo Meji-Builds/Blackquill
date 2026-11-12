@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Avatar } from "@/components/Avatar";
 import { Languages } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LANGUAGES, isLanguage, languageLabel } from "@/lib/translation/languages";
@@ -17,7 +18,7 @@ export default async function TranslatorsPage({ searchParams }: { searchParams: 
   const supabase = await createClient();
   let q = supabase
     .from("profiles")
-    .select("id, username, display_name, bio, translator_languages")
+    .select("id, username, display_name, bio, translator_languages, avatar_url")
     .neq("translator_languages", "{}")
     .order("created_at", { ascending: false })
     .limit(100);
@@ -65,9 +66,7 @@ export default async function TranslatorsPage({ searchParams }: { searchParams: 
             return (
               <li key={p.id}>
                 <Link href={`/author/${p.username}`} className="flex h-full gap-3.5 rounded-2xl border border-border bg-surface p-4 hover:bg-surface-2">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-strong to-[#5b3fd6] font-display text-xl font-semibold text-white">
-                    {name.charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar url={p.avatar_url} name={name} seed={p.username} size={44} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{name}</span>
                     <span className="block text-xs text-muted">@{p.username} · {n} {n === 1 ? "chapter" : "chapters"} translated</span>

@@ -19,6 +19,24 @@ export async function resolveReports(
     p_note: note?.trim() || null,
   });
   if (error) return { ok: false, error: error.message };
+  // Clearing a profile also clears its picture; delete the stored files too.
+  if (targetType === "profile" && action === "remove") await deleteAvatarFiles(supabase, targetId);
+  return { ok: true };
+}
+
+type Supabase = Awaited<ReturnType<typeof requireAdmin>>["supabase"];
+
+async function deleteAvatarFiles(supabase: Supabase, userId: string) {
+  const { data } = await supabase.storage.from("avatars").list(userId);
+  if (data?.length) await supabase.storage.from("avatars").remove(data.map((f) => `${userId}/${f.name}`));
+}
+
+/** Removes someone's profile picture (from a report about their profile or one of their comments). */
+export async function removeProfilePicture(username: string): Promise<ActionResult> {
+  const { supabase } = await requireAdmin();
+  const { data: userId, error } = await supabase.rpc("remove_profile_picture", { p_username: username });
+  if (error) return { ok: false, error: error.message };
+  if (userId) await deleteAvatarFiles(supabase, userId as string);
   return { ok: true };
 }
 

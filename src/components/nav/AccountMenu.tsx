@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Languages, BookOpen, Download, Feather, LogOut, Settings, Shield, UserRound } from "lucide-react";
 import type { Viewer } from "@/components/SiteHeader";
+import { Avatar } from "@/components/Avatar";
 
 /** Avatar button with the reader's own pages and sign out. */
 export function AccountMenu({ viewer }: { viewer: Viewer }) {
@@ -32,22 +33,25 @@ export function AccountMenu({ viewer }: { viewer: Viewer }) {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Account menu"
-        className="ml-1 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-strong to-[#5b3fd6] font-display text-lg font-semibold text-white ring-2 ring-background transition hover:ring-accent/40"
+        className="ml-1 flex h-9 w-9 items-center justify-center rounded-full ring-2 ring-background transition hover:ring-accent/40"
       >
-        {viewer.penName.charAt(0).toUpperCase()}
+        <Avatar url={viewer.avatarUrl} name={viewer.penName} seed={viewer.username} size={36} />
       </button>
       {open && (
         <div
           role="menu"
           className="absolute right-0 z-40 mt-2 w-64 rounded-2xl border border-border bg-surface-2 p-2 shadow-2xl shadow-black/60"
         >
-          <div className="px-3 pt-2 pb-3">
+          <div className="flex items-center gap-3 px-3 pt-2 pb-3">
+            <Avatar url={viewer.avatarUrl} name={viewer.penName} seed={viewer.username} size={40} />
+            <div className="min-w-0">
             <p className="truncate font-medium">{viewer.hasPenName ? viewer.penName : `@${viewer.username}`}</p>
             {viewer.hasPenName ? (
               <p className="truncate text-sm text-muted">@{viewer.username}</p>
             ) : (
               <p className="truncate text-sm text-muted">{viewer.isWriter ? "Writer" : "Reader"}</p>
             )}
+            </div>
           </div>
           <div className="h-px bg-border" />
           <div className="py-1">

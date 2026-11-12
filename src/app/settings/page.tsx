@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExternalLink, Languages, LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/ProfileForm";
+import { PicturePicker } from "@/components/settings/PicturePicker";
 import { ChangePassword } from "@/components/settings/ChangePassword";
 import { btn, card } from "@/components/ui/styles";
 
@@ -12,7 +13,7 @@ export default async function SettingsPage() {
   const { supabase, user } = await requireUser("/settings");
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username, display_name, bio, show_mature, created_at")
+    .select("username, display_name, bio, show_mature, created_at, avatar_url")
     .eq("id", user.id)
     .single();
   if (!profile) return null;
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-muted">
           {isWriter ? "How readers see you on your stories and author page." : "How others see you in comments and on your profile."}
         </p>
+        <PicturePicker url={profile.avatar_url} name={profile.display_name || profile.username} username={profile.username} />
         <ProfileForm
           initial={{
             penName: profile.display_name ?? "",
@@ -43,6 +45,7 @@ export default async function SettingsPage() {
             bio: profile.bio ?? "",
             showMature: profile.show_mature,
             isWriter,
+            avatarUrl: profile.avatar_url,
           }}
         />
       </section>

@@ -9,6 +9,7 @@ export interface CommentView {
   userId: string;
   username: string;
   name: string;
+  avatarUrl: string | null;
   /** Written by the story's author. */
   isAuthor: boolean;
 }

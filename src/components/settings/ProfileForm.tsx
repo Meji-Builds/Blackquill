@@ -5,6 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { AtSign, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { updateProfile, usernameAvailable } from "@/app/settings/actions";
 import { btn, input, label, textarea } from "@/components/ui/styles";
+import { Avatar } from "@/components/Avatar";
 
 interface Initial {
   penName: string;
@@ -12,6 +13,7 @@ interface Initial {
   bio: string;
   showMature: boolean;
   isWriter: boolean;
+  avatarUrl: string | null;
 }
 
 export function ProfileForm({ initial }: { initial: Initial }) {
@@ -35,9 +37,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
   return (
     <form action={action} className="mt-6 space-y-5">
       <div className="flex items-center gap-4 rounded-xl bg-surface-2 p-4 ring-1 ring-border">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-strong to-[#5b3fd6] font-display text-2xl font-semibold text-white">
-          {preview.charAt(0).toUpperCase()}
-        </span>
+        <Avatar url={initial.avatarUrl} name={preview} seed={initial.username} size={56} />
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-semibold">{initial.isWriter && penName.trim() ? preview : `@${username || "username"}`}</p>
           <p className="truncate text-sm text-muted">

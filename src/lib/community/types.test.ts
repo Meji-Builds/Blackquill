@@ -14,6 +14,7 @@ const c = (id: string, parentId: string | null, paragraphIndex: number | null): 
   username: "u",
   name: "U",
   isAuthor: false,
+  avatarUrl: null,
 });
 
 test("threads groups replies under their parent in order", () => {

@@ -10,6 +10,7 @@ import { ChapterIndex } from "@/components/reader/ChapterIndex";
 import { FollowButton } from "@/components/community/FollowButton";
 import { ReportButton } from "@/components/community/ReportButton";
 import { ShareButton } from "@/components/community/ShareButton";
+import { Avatar } from "@/components/Avatar";
 import { HelpTranslate, type MyTranslatorRow } from "@/components/translation/HelpTranslate";
 import { languageLabel } from "@/lib/translation/languages";
 import { machineTranslationReady } from "@/lib/translation/providers";
@@ -39,7 +40,7 @@ async function loadStory(storyId: string) {
   const { data } = await supabase
     .from("stories")
     .select(
-      "id, title, synopsis, cover_url, status, rating, removed_at, removed_reason, word_count, last_chapter_at, author_id, profiles!stories_author_id_fkey(username, display_name), story_genres(genres(slug, name)), story_tags(tags(slug, name))",
+      "id, title, synopsis, cover_url, status, rating, removed_at, removed_reason, word_count, last_chapter_at, author_id, profiles!stories_author_id_fkey(username, display_name, avatar_url), story_genres(genres(slug, name)), story_tags(tags(slug, name))",
     )
     .eq("id", storyId)
     .neq("status", "draft")
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const loaded = await loadStory(storyId);
   if (!loaded) return { title: "Story not found" };
   const { story } = loaded;
-  const author = story.profiles as unknown as { username: string; display_name: string | null } | null;
+  const author = story.profiles as unknown as { username: string; display_name: string | null; avatar_url: string | null } | null;
   const description = story.rating === "mature" ? "A mature story on Obsidian Quill." : story.synopsis.slice(0, 160);
   return {
     title: story.title,
@@ -74,7 +75,7 @@ export default async function StoryPage({ params }: { params: Params }) {
   if (!loaded) notFound();
   const { supabase, story } = loaded;
 
-  const author = story.profiles as unknown as { username: string; display_name: string | null } | null;
+  const author = story.profiles as unknown as { username: string; display_name: string | null; avatar_url: string | null } | null;
   const genres = (story.story_genres as unknown as { genres: { slug: string; name: string } | null }[]).flatMap((g) =>
     g.genres ? [g.genres] : [],
   );
@@ -159,8 +160,11 @@ export default async function StoryPage({ params }: { params: Params }) {
           )}
           <h1 className="mt-1 font-display text-[30px] leading-[1.05] font-semibold sm:text-[46px]">{story.title}</h1>
           {author && (
-            <Link href={`/author/${author.username}`} className="mt-2 inline-block text-sm text-muted hover:text-foreground sm:text-base">
-              by <span className="font-medium text-foreground">{authorName}</span>
+            <Link href={`/author/${author.username}`} className="mt-2 inline-flex items-center gap-2 text-sm text-muted hover:text-foreground sm:text-base">
+              <Avatar url={author.avatar_url} name={authorName ?? author.username} seed={author.username} size={28} />
+              <span>
+                by <span className="font-medium text-foreground">{authorName}</span>
+              </span>
             </Link>
           )}
           <div className="mt-3">

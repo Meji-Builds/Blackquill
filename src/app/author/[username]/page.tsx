@@ -9,6 +9,7 @@ import { FollowButton } from "@/components/community/FollowButton";
 import { ReportButton } from "@/components/community/ReportButton";
 import { ShareButton } from "@/components/community/ShareButton";
 import { languageLabel } from "@/lib/translation/languages";
+import { Avatar } from "@/components/Avatar";
 
 type Params = Promise<{ username: string }>;
 
@@ -17,7 +18,7 @@ async function load(username: string) {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, created_at, translator_languages")
+    .select("id, username, display_name, bio, created_at, translator_languages, avatar_url")
     .eq("username", username)
     .maybeSingle();
   return profile ? { supabase, profile } : null;
@@ -106,9 +107,7 @@ export default async function AuthorPage({ params }: { params: Params }) {
           className="absolute inset-0 bg-[radial-gradient(circle_at_90%_0%,rgba(143,107,255,0.22),transparent_50%)]"
         />
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-          <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-strong to-[#5b3fd6] font-display text-4xl font-semibold text-white ring-4 ring-background">
-            {name.charAt(0).toUpperCase()}
-          </span>
+          <Avatar url={profile.avatar_url} name={name} seed={profile.username} size={88} className="ring-4 ring-background" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold tracking-[0.2em] text-gold uppercase">
               {[isWriter ? "Author" : null, translates.length || translated.length ? "Translator" : null].filter(Boolean).join(" · ") || "Reader"}

@@ -96,6 +96,13 @@ Everyone signs up with just an email (or Google) and gets a username; readers ar
 writers: the first time someone starts a story they can choose one (or keep writing under their username), and
 change it later in settings. The database refuses a pen name on an account with no stories.
 
+Everyone can add a profile picture in settings (crop to a circle, re-encoded server-side to a 320px WebP with photo
+metadata stripped). Without one, people get a monogram in a colour picked from their username. Pictures show in the
+header, comments, profile pages, story bylines, notifications and the translator directory. Pictures live in the
+public `avatars` bucket; a profile can only point at its owner's own folder there, files are capped at 512 KB, and
+pictures can change 10 times a day (`20261120000000_profile_pictures.sql`). Admins can remove a reported picture from
+the moderation queue in one click.
+
 ### Build step 10: moderation, polish, launch prep
 
 - Report button on stories, author pages and comments (reason + optional details; one open report per person per

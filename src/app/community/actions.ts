@@ -41,7 +41,7 @@ export async function setFollow(
   return { ok: true, following: follow };
 }
 
-const COMMENT_SELECT = "id, body, paragraph_index, parent_id, created_at, updated_at, is_hidden, user_id, profiles(username, display_name)";
+const COMMENT_SELECT = "id, body, paragraph_index, parent_id, created_at, updated_at, is_hidden, user_id, profiles(username, display_name, avatar_url)";
 
 type Row = {
   id: string;
@@ -52,7 +52,7 @@ type Row = {
   updated_at: string;
   is_hidden: boolean;
   user_id: string;
-  profiles: { username: string; display_name: string | null } | null;
+  profiles: { username: string; display_name: string | null; avatar_url: string | null } | null;
 };
 
 function toView(r: Row, authorId: string | null): CommentView {
@@ -67,6 +67,7 @@ function toView(r: Row, authorId: string | null): CommentView {
     userId: r.user_id,
     username: r.profiles?.username ?? "reader",
     name: r.profiles?.display_name || r.profiles?.username || "Reader",
+    avatarUrl: r.profiles?.avatar_url ?? null,
     isAuthor: authorId !== null && r.user_id === authorId,
   };
 }

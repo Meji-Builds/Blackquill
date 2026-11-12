@@ -20,6 +20,7 @@ export interface Viewer {
   /** Has started at least one story; only writers have pen names. */
   isWriter: boolean;
   hasPenName: boolean;
+  avatarUrl: string | null;
 }
 
 /** The signed-in reader, looked up once per request however many components ask. */
@@ -31,7 +32,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   } = await supabase.auth.getUser();
   if (!user) return null;
   const [{ data }, { count }, { count: stories }] = await Promise.all([
-    supabase.from("profiles").select("username, display_name, is_admin, show_mature").eq("id", user.id).single(),
+    supabase.from("profiles").select("username, display_name, is_admin, show_mature, avatar_url").eq("id", user.id).single(),
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null),
     supabase.from("stories").select("id", { count: "exact", head: true }).eq("author_id", user.id),
   ]);
@@ -44,6 +45,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     showMature: data.show_mature,
     isWriter: (stories ?? 0) > 0,
     hasPenName: Boolean(data.display_name),
+    avatarUrl: data.avatar_url,
   };
 });
 
